@@ -68,12 +68,46 @@ export const useTransactions = () => {
     }
   };
 
+  const cancelTransaction = async (id: string) => {
+    isFetching.value = true;
+    error.value = null;
+    try {
+      await $fetch(`http://localhost:3001/transactions/${id}/cancel`, { method: 'PATCH' });
+      error.value = null;
+      await fetchAll();
+    } catch (e: any) {
+      error.value = Array.isArray(e.data?.message)
+        ? e.data.message.join(' | ')
+        : (e.data?.message || 'İptal işlemi sırasında bir hata oluştu.');
+    } finally {
+      isFetching.value = false;
+    }
+  };
+
+  const rollbackTransaction = async (id: string) => {
+    isFetching.value = true;
+    error.value = null;
+    try {
+      await $fetch(`http://localhost:3001/transactions/${id}/rollback`, { method: 'PATCH' });
+      error.value = null;
+      await fetchAll();
+    } catch (e: any) {
+      error.value = Array.isArray(e.data?.message)
+        ? e.data.message.join(' | ')
+        : (e.data?.message || 'Geri alma işlemi sırasında bir hata oluştu.');
+    } finally {
+      isFetching.value = false;
+    }
+  };
+
   return {
     transactions,
     isFetching,
     error,
     fetchAll,
     createTransaction,
-    updateStatus
+    updateStatus,
+    cancelTransaction,
+    rollbackTransaction
   }
 }

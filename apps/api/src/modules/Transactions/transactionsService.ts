@@ -24,37 +24,97 @@ export class TransactionsService {
     return createdTransaction.save();
   }
 
+  // State Machine geçiş sırasını zorlayan yardımcı metot (DRY prensibi)
+  private readonly STATUS_FLOW: TransactionStatus[] = [
+    TransactionStatus.AGREEMENT,
+    TransactionStatus.EARNEST_MONEY,
+    TransactionStatus.TITLE_DEED,
+    TransactionStatus.COMPLETED,
+  ];
+
+  private getNextStatus(current: TransactionStatus): TransactionStatus | null {
+    const idx = this.STATUS_FLOW.indexOf(current);
+    return idx >= 0 && idx < this.STATUS_FLOW.length - 1 ? this.STATUS_FLOW[idx + 1] : null;
+  }
+
+  private getPreviousStatus(current: TransactionStatus): TransactionStatus | null {
+    const idx = this.STATUS_FLOW.indexOf(current);
+    return idx > 0 ? this.STATUS_FLOW[idx - 1] : null;
+  }
+
   async updateTransactionStatus(id: string, updateDto: UpdateTransactionStatusDto): Promise<TransactionDocument> {
-    // 1. Transaction için MongoDB Session başlatıyoruz.
     const session = await this.transactionModel.db.startSession();
     session.startTransaction();
 
     try {
       const transaction = await this.transactionModel.findById(id).session(session);
-      if (!transaction) throw new NotFoundException('Transaction bulunamadı.');
-      
+      if (!transaction) throw new NotFoundException('Aradığınız emlak işlemi bulunamadı.');
+
+      const currentStatus = transaction.status;
+
+      // İptal edilmiş veya tamamlanmış işlemlerin durumu değiştirilemez.
+      if (currentStatus === TransactionStatus.CANCELLED) {
+        throw new BadRequestException('İptal edilmiş bir işlemin aşaması değiştirilemez.');
+      }
+      if (currentStatus === TransactionStatus.COMPLETED) {
+        throw new BadRequestException('Tamamlanmış bir işlem artık güncellenemez.');
+      }
+
+      // Yalnızca bir sonraki veya bir önceki geçerli adıma geçişe izin ver
+      const allowedNext = this.getNextStatus(currentStatus);
+      const allowedPrev = this.getPreviousStatus(currentStatus);
+      if (updateDto.status !== allowedNext && updateDto.status !== allowedPrev && updateDto.status !== TransactionStatus.CANCELLED) {
+        throw new BadRequestException(
+          `Bu işlemin şu anki aşamasından (${currentStatus}) doğrudan bu aşamaya geçiş yapılamaz.`
+        );
+      }
+
       const previousStatus = transaction.status;
       transaction.status = updateDto.status;
-      
-      // Tapu / İşlem kendi koleksiyonunda güncellendi. (Şu an bellekte)
       await transaction.save({ session });
 
-      // 2. Eğer COMPLETED aşamasına geçiliyorsa Komisyon tetiklenir:
       if (previousStatus !== TransactionStatus.COMPLETED && updateDto.status === TransactionStatus.COMPLETED) {
-        // commissionsService aynı session anahtarını kullanarak işlemi dondurulmuş veritabanına geçirir.
         await this.commissionsService.calculateCommission(transaction, session);
       }
 
-      // 3. Her şey başarılı. Veritabanına fiziksel olarak yansıt. (Commit)
       await session.commitTransaction();
       session.endSession();
-
       return transaction;
     } catch (error) {
-      // 4. Herhangi bir hata durumunda (Hata fırlatılması) veriyi geri sar. (Abort & Rollback)
       await session.abortTransaction();
       session.endSession();
-      throw new BadRequestException(`İşlem sırasında bir hata oluştu: ${error.message}`);
+      // BadRequestException / NotFoundException zaten kullanıcı dostudur, tekrar sarmaya gerek yok.
+      if (error instanceof BadRequestException || error instanceof NotFoundException) throw error;
+      throw new BadRequestException('Durum güncellenirken beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.');
     }
   }
-}
+
+  async cancelTransaction(id: string): Promise<TransactionDocument> {
+    const transaction = await this.transactionModel.findById(id);
+    if (!transaction) throw new NotFoundException('Aradığınız emlak işlemi bulunamadı.');
+    if (transaction.status === TransactionStatus.COMPLETED) {
+      throw new BadRequestException('Tamamlanmış bir işlem iptal edilemez. Lütfen yöneticinizle iletişime geçin.');
+    }
+    if (transaction.status === TransactionStatus.CANCELLED) {
+      throw new BadRequestException('Bu işlem zaten iptal edilmiş.');
+    }
+    transaction.status = TransactionStatus.CANCELLED;
+    return transaction.save();
+  }
+
+  async rollbackTransactionStatus(id: string): Promise<TransactionDocument> {
+    const transaction = await this.transactionModel.findById(id);
+    if (!transaction) throw new NotFoundException('Aradığınız emlak işlemi bulunamadı.');
+    if (transaction.status === TransactionStatus.CANCELLED) {
+      throw new BadRequestException('İptal edilmiş bir işlem geri alınamaz.');
+    }
+    if (transaction.status === TransactionStatus.COMPLETED) {
+      throw new BadRequestException('Tamamlanmış bir işlem geri alınamaz. Lütfen yöneticinizle iletişime geçin.');
+    }
+    const previousStatus = this.getPreviousStatus(transaction.status);
+    if (!previousStatus) {
+      throw new BadRequestException('Bu işlem zaten başlangıç aşamasında, daha geriye dönülemiyor.');
+    }
+    transaction.status = previousStatus;
+    return transaction.save();
+  }

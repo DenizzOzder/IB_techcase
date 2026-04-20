@@ -24,4 +24,14 @@ export class TransactionsController {
   ) {
     return this.transactionsService.updateTransactionStatus(id, updateDto);
   }
+
+  @Patch(':id/cancel')
+  async cancel(@Param('id') id: string) {
+    return this.transactionsService.cancelTransaction(id);
+  }
+
+  @Patch(':id/rollback')
+  async rollback(@Param('id') id: string) {
+    return this.transactionsService.rollbackTransactionStatus(id);
+  }
 }
