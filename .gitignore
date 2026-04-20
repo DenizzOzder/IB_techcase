@@ -35,5 +35,6 @@ pnpm-debug.log*
 .DS_Store
 Thumbs.db
 
-# Internal Rules
+# Internal Rules (Yerel Geliştirici Dosyaları)
 Tech_Rules.md
+TODO.md
