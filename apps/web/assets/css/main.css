@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Müşterinin talebine istinaden Dark/Light mod geçişli palet yapısı */
+    --color-bg: #f8fafc;
+    --color-surface: #ffffff;
+    --color-text: #0f172a;
+    --color-primary: #3b82f6; 
+    --color-primary-hover: #2563eb;
+    --color-success: #10b981;
+    --color-warning: #f59e0b;
+    --color-danger: #ef4444;
+  }
+  
+  /* Class bazlı Dark Mode kuralları */
+  .dark {
+    --color-bg: #0f172a;
+    --color-surface: #1e293b;
+    --color-text: #f8fafc;
+    --color-primary: #8b5cf6; /* Dark modda primary renk violet'a çalacak şekilde modernleştirildi */
+    --color-primary-hover: #7c3aed;
+    --color-success: #34d399;
+    --color-warning: #fbbf24;
+    --color-danger: #f87171;
+  }
+}
+
+body {
+  /* Arkaplan ve metin geçişi sırasında animasyon */
+  @apply bg-background text-text antialiased transition-colors duration-300;
+}
