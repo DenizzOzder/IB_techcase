@@ -2,7 +2,7 @@
 
 Emlak danışmanlarının satış süreçlerini uçtan uca dijital ortamda takip etmesini sağlayan bir yönetim platformu.
 
-Anlaşmadan tapuya, kapara ödemesinden komisyon hesabına kadar her adım kayıt altına alınır. Danışman, hangi işlemin hangi aşamada olduğunu tek ekrandan görebilir; süreci ilerletebilir, geri alabilir ya da iptal edebilir.
+Anlaşmadan tapuya, kapora ödemesinden komisyon hesabına kadar her adım kayıt altına alınır. Danışman, hangi işlemin hangi aşamada olduğunu tek ekrandan görebilir; süreci ilerletebilir, geri alabilir ya da iptal edebilir.
 
 ---
 
