@@ -118,7 +118,49 @@ AGREEMENT → EARNEST_MONEY → TITLE_DEED → COMPLETED
 | `PATCH` | `/transactions/:id/status` | Statü güncelle (sıralı geçiş zorunlu) |
 | `PATCH` | `/transactions/:id/cancel` | İşlemi iptal et |
 | `PATCH` | `/transactions/:id/rollback` | Bir önceki aşamaya geri al |
+| `GET` | `/logs?page=1&limit=20` | Audit logları sayfalı listele *(planlanan)* |
 
 ---
 
-*Bu doküman proje boyunca güncel tutulmaktadır. Son güncelleme: Aşama 7 (Güvenlik ve Prensip Analizi)*
+## 8. Komisyon Görünürlüğü: Neden Tamamlandıktan Sonra?
+
+Komisyon kaydı yalnızca `TITLE_DEED → COMPLETED` geçişinde, MongoDB `ClientSession` içinde atomik olarak oluşturulur. Bu kararın UI yansıması da aynı prensibe dayanır:
+
+- İşlem tamamlanmadan komisyon tutarı arayüzde gösterilmez — çünkü **henüz kesinleşmemiş** bir finansal veridir.
+- `COMPLETED` statüsüne geçildiği anda `Commissions` koleksiyonuna yazılan kayıt, danışmanın kartında otomatik olarak görünür hale gelir.
+- **Neden ayrı koleksiyon?** Komisyon verisi üzerinde ilerleyen süreçte fatura, muhasebe entegrasyonu veya yetki kısıtlaması (yalnızca finans ekibi görebilir) gerekebilir. Transaction içine gömmek bu esnekliği yok ederdi.
+
+---
+
+## 9. Audit Log Mimarisi
+
+### 9.1 Neden Her Adım Loglanmalı?
+
+Bir emlak danışmanının bir işlemi yanlışlıkla ilerletmesi, geri alması veya iptal etmesi durumunda yöneticinin "ne oldu, kim yaptı, ne zaman?" sorularını yanıtlayabilmesi gerekir. Salt `status` alanı bunu sağlamaz; yalnızca anlık durumu tutar, geçmişi tutmaz.
+
+Bu nedenle her statü değişiminde (`ilerletme`, `geri alma`, `iptal`, `tamamlama`) ayrı bir `AuditLog` belgesi oluşturulacaktır. Log belgesi şu alanları içerecektir:
+
+| Alan | Açıklama |
+|------|----------|
+| `transactionId` | Hangi işlem |
+| `agentId` | Kim yaptı |
+| `previousStatus` | Önceki durum |
+| `newStatus` | Yeni durum |
+| `action` | `ADVANCED` / `ROLLED_BACK` / `CANCELLED` / `COMPLETED` |
+| `timestamp` | Tam zaman damgası (ISO 8601) |
+
+### 9.2 Neden Pagination ve Caching Zorunlu?
+
+Aktif bir şirkette her işlem için birden fazla log üretilir. 100 danışman × 10 işlem × ortalama 4 adım = **4.000 log/ay**, yıllık **48.000+ belge**. Bunları filtresiz tek seferde çekmek hem veritabanını hem ağı gereksiz yere yorur.
+
+**Alınan Kararlar:**
+
+- **Offset-based Pagination:** `GET /logs?page=1&limit=20` ile log listesi parça parça çekilecek. Büyük veri setlerinde `skip/limit` yerine cursor-based pagination geçişi değerlendirilecek (bkz. TODO.md).
+- **Redis Cache:** Yönetici panelindeki özet istatistikler (aylık komisyon toplamı, işlem sayısı) her istekte MongoDB'ye sorgu atmak yerine önbellekten sunulacak.
+- **Cache Invalidation:** Bir statü değiştiğinde etkilenen özet anahtarları (`commission:monthly`, `transaction:stats`) otomatik temizlenecek. Bu sayede önbellek verisi hiçbir zaman eskimez.
+
+> Bu kararların temel motivasyonu: **Log verisi yazma hızlı, okuma sık.** İki operasyonu birbirinden bağımsız optimize etmek sistem ölçeklenebilirliğini korur.
+
+---
+
+*Bu doküman proje boyunca güncel tutulmaktadır. Son güncelleme: Aşama 8 (Audit Log, Komisyon Görünürlüğü ve Scaling Kararları)*
