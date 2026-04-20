@@ -1,5 +1,6 @@
 import { ref } from 'vue';
 import { ITransaction, TransactionStatus, ICreateTransactionRequest } from '@repo/types';
+import { $fetch } from 'ofetch'; // IDE Auto-import uyarısını çözmek için explicit import
 
 export const useTransactions = () => {
   const isFetching = ref(false);
