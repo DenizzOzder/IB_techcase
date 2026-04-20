@@ -1,0 +1,23 @@
+
+> api@0.0.1 build /Users/yhwach/Desktop/IB_techcase/apps/api
+> nest build
+
+[96msrc/modules/Commissions/commissionsService.ts[0m:[93m19[0m:[93m31[0m - [91merror[0m[90m TS18048: [0m'transactionData.propertyPrice' is possibly 'undefined'.
+
+[7m19[0m     const calculatedAmount = (transactionData.propertyPrice * transactionData.commissionRate) / 100;
+[7m  [0m [91m                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/Commissions/commissionsService.ts[0m:[93m19[0m:[93m63[0m - [91merror[0m[90m TS18048: [0m'transactionData.commissionRate' is possibly 'undefined'.
+
+[7m19[0m     const calculatedAmount = (transactionData.propertyPrice * transactionData.commissionRate) / 100;
+[7m  [0m [91m                                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/Transactions/transactionsService.ts[0m:[93m40[0m:[93m59[0m - [91merror[0m[90m TS2345: [0mArgument of type 'Document<unknown, {}, TransactionDocument, {}, DefaultSchemaOptions> & Transaction & Document<ObjectId, any, any, Record<...>, {}> & Required<...> & { ...; } & { ...; }' is not assignable to parameter of type 'Partial<ITransaction> & { _id: any; }'.
+  Type 'Document<unknown, {}, TransactionDocument, {}, DefaultSchemaOptions> & Transaction & Document<ObjectId, any, any, Record<...>, {}> & Required<...> & { ...; } & { ...; }' is not assignable to type 'Partial<ITransaction>'.
+    Types of property '_id' are incompatible.
+      Type 'ObjectId' is not assignable to type 'string'.
+
+[7m40[0m         await this.commissionsService.calculateCommission(transaction, session);
+[7m  [0m [91m                                                          ~~~~~~~~~~~[0m
+
+Found 3 error(s).
+
+ ELIFECYCLE  Command failed with exit code 1.

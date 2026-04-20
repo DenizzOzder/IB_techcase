@@ -14,7 +14,7 @@ export class CommissionsService {
    * MongoDB Transactions desteğiyle komisyon hesaplaması.
    * COMPLETED statüsüne alınan transaction üzerinden tetiklenir.
    */
-  async calculateCommission(transactionData: Partial<ITransaction> & { _id: any }, session: ClientSession) {
+  async calculateCommission(transactionData: { _id: any; propertyPrice: number; commissionRate: number }, session: ClientSession) {
     // Emlak satış/kiralama tutarı ve yüzdelik komisyon oranı üzerinden matematiksel hesap.
     const calculatedAmount = (transactionData.propertyPrice * transactionData.commissionRate) / 100;
 
