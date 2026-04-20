@@ -14,6 +14,11 @@ export class TransactionsService {
     private readonly commissionsService: CommissionsService
   ) {}
 
+  async findAll(): Promise<TransactionDocument[]> {
+    // Tüm kayıtları listelemek için eklendi (Aşama 6 Frontend Get isteği için)
+    return this.transactionModel.find().exec();
+  }
+
   async createTransaction(createDto: CreateTransactionDto): Promise<TransactionDocument> {
     const createdTransaction = new this.transactionModel(createDto);
     return createdTransaction.save();
