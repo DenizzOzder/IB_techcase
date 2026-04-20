@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, ClientSession } from 'mongoose';
 import { Commission, CommissionDocument } from './Schemas/commissionSchema';
+import { CommissionStatus, ITransaction } from '@repo/types';
 
 @Injectable()
 export class CommissionsService {
@@ -11,10 +12,21 @@ export class CommissionsService {
 
   /**
    * MongoDB Transactions desteğiyle komisyon hesaplaması.
-   * @param transactionData Komisyonu hesaplanacak işlem verisi
-   * @param session MongoDB Transaction oturumu
+   * COMPLETED statüsüne alınan transaction üzerinden tetiklenir.
    */
-  async calculateCommission(transactionData: any, session?: ClientSession) {
-    // İzole edilebilir iş ve hesaplama mantığı eklenecek
+  async calculateCommission(transactionData: Partial<ITransaction> & { _id: any }, session: ClientSession) {
+    // Emlak satış/kiralama tutarı ve yüzdelik komisyon oranı üzerinden matematiksel hesap.
+    const calculatedAmount = (transactionData.propertyPrice * transactionData.commissionRate) / 100;
+
+    // Bağımsız Commission koleksiyonuna dökümanı ekle.
+    const commission = new this.commissionModel({
+      transactionId: transactionData._id,
+      amount: calculatedAmount,
+      status: CommissionStatus.UNPAID
+    });
+
+    // Session garantisi: eğer başka bir yerde hata olursa MongoDB kaydı iptal edecek (Rollback).
+    await commission.save({ session });
+    return commission;
   }
 }

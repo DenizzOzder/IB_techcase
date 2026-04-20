@@ -1,2 +1,56 @@
-// Base Transactions and Commissions Types will be exported here
-export {};
+/**
+ * İşlem (Tapu vs.) Aşama Statüleri
+ * AGREEMENT: Anlaşma Sağlandı
+ * EARNEST_MONEY: Kapora Alındı
+ * TITLE_DEED: Tapu Devri Aşamasında
+ * COMPLETED: İşlem Tamamlandı (Komisyon hakediliş noktası)
+ * CANCELLED: İptal Edildi
+ */
+export enum TransactionStatus {
+  AGREEMENT = 'AGREEMENT',
+  EARNEST_MONEY = 'EARNEST_MONEY',
+  TITLE_DEED = 'TITLE_DEED',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED'
+}
+
+/**
+ * Komisyonun Tahsilat Durumu
+ */
+export enum CommissionStatus {
+  UNPAID = 'UNPAID',
+  PAID = 'PAID',
+  CANCELLED = 'CANCELLED' // Eğer tapuda sorun çıkar vs iptal olursa
+}
+
+export interface ITransaction {
+  _id?: string;
+  propertyTitle: string; // İlan / Gayrimenkul Adı
+  propertyPrice: number; // Mülkün veya sözleşmenin toplam tutarı
+  agentName: string; // Satışı/kiralama yapan danışmanın adı
+  commissionRate: number; // Yüzdelik Oran (Örn: 2 => %2)
+  status: TransactionStatus;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+}
+
+export interface ICommission {
+  _id?: string;
+  transactionId: string | any; // MongoDB ObjectId Referansı bağlanacak
+  amount: number; // Hesaplanmış komisyon (propertyPrice * commissionRate / 100)
+  status: CommissionStatus;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+}
+
+// Request & Response Typings
+export interface ICreateTransactionRequest {
+  propertyTitle: string;
+  propertyPrice: number;
+  agentName: string;
+  commissionRate: number;
+}
+
+export interface IUpdateTransactionStatusRequest {
+  status: TransactionStatus;
+}
