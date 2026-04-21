@@ -36,7 +36,7 @@ export interface ITransaction {
 
 export interface ICommission {
   _id?: string;
-  transactionId: string | any; // MongoDB ObjectId Referansı bağlanacak
+  transactionId: string; // MongoDB ObjectId Referansı bağlanacak
   amount: number; // Hesaplanmış komisyon (propertyPrice * commissionRate / 100)
   status: CommissionStatus;
   createdAt?: string | Date;
@@ -53,4 +53,48 @@ export interface ICreateTransactionRequest {
 
 export interface IUpdateTransactionStatusRequest {
   status: TransactionStatus;
+}
+
+export enum Role {
+  ADMIN = 'ADMIN',
+  AGENT = 'AGENT'
+}
+
+export interface IUser {
+  _id?: string;
+  name: string;
+  email: string;
+  password?: string;
+  role: Role;
+  hashedRefreshToken?: string;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+}
+
+export interface IJwtPayload {
+  sub: string;
+  email: string;
+  role: Role;
+}
+
+export interface ILoginRequest {
+  email: string;
+  password?: string;
+}
+
+export interface ILoginResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: {
+    _id: string;
+    email: string;
+    name: string;
+    role: Role;
+  };
+}
+
+export interface IRegisterAgentRequest {
+  name: string;
+  email: string;
+  password?: string;
 }

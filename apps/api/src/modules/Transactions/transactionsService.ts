@@ -118,3 +118,4 @@ export class TransactionsService {
     transaction.status = previousStatus;
     return transaction.save();
   }
+}
