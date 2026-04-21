@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, ClientSession } from 'mongoose';
-import { Commission, CommissionDocument } from './Schemas/commissionSchema';
+import { Commission, CommissionDocument } from '@/modules/Commissions/Schemas/commissionSchema';
 import { CommissionStatus, ITransaction } from '@repo/types';
 
 @Injectable()

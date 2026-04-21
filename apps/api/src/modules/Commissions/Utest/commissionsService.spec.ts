@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { CommissionsService } from '../commissionsService';
+import { CommissionsService } from '@/modules/Commissions/commissionsService';
 import { getModelToken } from '@nestjs/mongoose';
-import { Commission } from '../Schemas/commissionSchema';
+import { Commission } from '@/modules/Commissions/Schemas/commissionSchema';
 import { ClientSession } from 'mongoose';
 import { CommissionStatus } from '@repo/types';
 

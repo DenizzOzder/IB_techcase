@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { TransactionsController } from './transactionsController';
-import { TransactionsService } from './transactionsService';
-import { Transaction, TransactionSchema } from './Schemas/transactionSchema';
-import { CommissionsModule } from '../Commissions/commissionsModule';
+import { TransactionsController } from '@/modules/Transactions/transactionsController';
+import { TransactionsService } from '@/modules/Transactions/transactionsService';
+import { Transaction, TransactionSchema } from '@/modules/Transactions/Schemas/transactionSchema';
+import { CommissionsModule } from '@/modules/Commissions/commissionsModule';
 
 @Module({
   imports: [

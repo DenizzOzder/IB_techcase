@@ -1,8 +1,8 @@
 import { Controller, Post, Body, UseGuards, Req, HttpCode, HttpStatus } from '@nestjs/common';
-import { AuthService } from './auth.service';
-import { LoginDto } from './dto/login.dto';
-import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { AuthService } from '@/modules/Auth/authService';
+import { LoginDto } from '@/modules/Auth/Dtos/loginDto';
+import { JwtAuthGuard } from '@/Common/Guards/jwtAuthGuard';
+import { CurrentUser } from '@/Common/Decorators/currentUserDecorator';
 import type { IJwtPayload } from '@repo/types';
 
 @Controller('auth')

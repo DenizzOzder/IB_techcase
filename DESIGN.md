@@ -12,7 +12,20 @@ Bu doküman, Emlak Operasyon Sistemi projesinde alınan mimari ve teknik kararla
 
 ---
 
-## 2. Neden MongoDB Transactions (ClientSession)?
+## 2. İsimlendirme, Tip Güvenliği ve Temiz Kod
+- **İsimlendirme Standartları:** Tüm dosya ve klasör yaratımlarında şu standartlara **kesinlikle** uyulacaktır:
+  - **Klasör İsimleri:** `PascalCase` (Örn: `Transactions`, `Commissions`, `Components`).
+  - **Birim Test Klasörü:** Sadece test yerine her zaman `Utest` olarak isimlendirilecektir (Örn: `Utest/commissions.service.spec.ts`).
+  - **Dosya İsimleri:** `camelCase` (Örn: `transactionsController.ts`, `useTransactions.ts`).
+  - **Sınıflar ve Arayüzler (Interfaces):** `PascalCase` (Örn: `TransactionsController`, `ITransaction`).
+  - **Değişkenler ve Fonksiyonlar:** `camelCase` (Örn: `calculateCommission()`, `propertyPrice`).
+- **Strict Tip Güvenliği:** Projede `any` kullanımı tamamen YASAKTIR. Backend ve Frontend iletişimi `packages/types` üzerinden referanslanan strict interface'lerle sağlanacaktır.
+- **Mimari Prensipler:** SOLID, DRY ve KISS prensiplerine her koşulda sadık kalınacak olup, karmaşık logice sahip kısımlar JSDoc yorum bloklarıyla detaylıca açıklanacaktır.
+- **Alias Path Yönlendirmeleri:** Kod okunabilirliğini artırmak ve Spagetti Path'in (`../../../` vs.) önüne geçmek için tüm proje genelinde (Nuxt ve NestJS tarafında) mutlak `@/` modül takma adları (Alias Path) kullanılacaktır. Relatif importlardan kaçınılacaktır.
+
+---
+
+## 3. Neden MongoDB Transactions (ClientSession)?
 Emlak sektöründe komisyon kazanımı, tapu başvurusunun veya işlem durumunun başarılı olmasına doğrudan bağlıdır.
 Eğer bir hata yüzünden tapu durumu güncellenemezse, komisyon satırının da **yazılmaması** gerekir.
 - **Finansal Veri Bütünlüğü (ACID):** MongoDB Atlas üzerindeki `Replica Set` yardımıyla desteklenen `Transactions` blokları kullanılarak, işlemler birbiriyle bağlanmış, herhangi bir adımdaki hata anında `abortTransaction` ile tüm değişikliğin geri sarılması garanti altına alınmıştır.
@@ -20,7 +33,7 @@ Eğer bir hata yüzünden tapu durumu güncellenemezse, komisyon satırının da
 
 ---
 
-## 3. Komisyon Verisi: Gömülü mü, Ayrı Koleksiyon mu?
+## 4. Komisyon Verisi: Gömülü mü, Ayrı Koleksiyon mu?
 - Sistemde komisyon bilgileri **ayrı bir koleksiyonda (Commissions)** tutulmakta, `Transactions` koleksiyonu ile ObjectId referans bağı kurulmaktadır.
 - **Neden Ayrı Koleksiyon?** Komisyon verileri üzerinde toplu raporlama (aylık kazanımlar), muhasebe entegrasyonu veya yetkilendirme gereksinimi yüksektir. `Single Responsibility` prensibi gereği ayrı tutulmuştur.
 

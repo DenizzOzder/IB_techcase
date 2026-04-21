@@ -1,10 +1,10 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Transaction, TransactionDocument } from './Schemas/transactionSchema';
-import { CommissionsService } from '../Commissions/commissionsService';
-import { CreateTransactionDto } from './Dtos/createTransactionDto';
-import { UpdateTransactionStatusDto } from './Dtos/updateTransactionStatusDto';
+import { Transaction, TransactionDocument } from '@/modules/Transactions/Schemas/transactionSchema';
+import { CommissionsService } from '@/modules/Commissions/commissionsService';
+import { CreateTransactionDto } from '@/modules/Transactions/Dtos/createTransactionDto';
+import { UpdateTransactionStatusDto } from '@/modules/Transactions/Dtos/updateTransactionStatusDto';
 import { TransactionStatus } from '@repo/types';
 
 @Injectable()

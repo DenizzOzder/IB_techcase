@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { TransactionsModule } from './modules/Transactions/transactionsModule';
-import { CommissionsModule } from './modules/Commissions/commissionsModule';
-import { AuthModule } from './modules/Auth/auth.module';
-import { UsersModule } from './modules/Users/users.module';
+import { AppController } from '@/app.controller';
+import { AppService } from '@/app.service';
+import { TransactionsModule } from '@/modules/Transactions/transactionsModule';
+import { CommissionsModule } from '@/modules/Commissions/commissionsModule';
+import { AuthModule } from '@/modules/Auth/authModule';
+import { UsersModule } from '@/modules/Users/usersModule';
 
 @Module({
   imports: [
