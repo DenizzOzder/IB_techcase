@@ -25,10 +25,11 @@ export enum CommissionStatus {
 
 export interface ITransaction {
   _id?: string;
-  propertyTitle: string; // İlan / Gayrimenkul Adı
-  propertyPrice: number; // Mülkün veya sözleşmenin toplam tutarı
-  agentName: string; // Satışı/kiralama yapan danışmanın adı
-  commissionRate: number; // Yüzdelik Oran (Örn: 2 => %2)
+  propertyTitle: string;     // İlan / Gayrimenkul Adı
+  propertyPrice: number;     // Mülkün veya sözleşmenin toplam tutarı
+  agentId: string;           // İşlemi açan danışmanın User._id referansı (JWT'den alınır)
+  agentName?: string;        // Geriye dönük uyumluluk için optional
+  commissionRate: number;    // Yüzdelik Oran (Örn: 2 => %2)
   status: TransactionStatus;
   createdAt?: string | Date;
   updatedAt?: string | Date;
@@ -47,7 +48,7 @@ export interface ICommission {
 export interface ICreateTransactionRequest {
   propertyTitle: string;
   propertyPrice: number;
-  agentName: string;
+  // agentId: backend JWT token'dan otomatik alınır, client göndermez
   commissionRate: number;
 }
 

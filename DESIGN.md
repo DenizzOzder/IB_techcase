@@ -77,9 +77,9 @@ AGREEMENT → EARNEST_MONEY → TITLE_DEED → COMPLETED
 
 | Açık | Risk Seviyesi | Öneri |
 |------|--------------|-------|
-| Auth / JWT yok | 🔴 Yüksek | NestJS `@nestjs/jwt` + `PassportStrategy` ile Guard katmanı eklenmeli |
+| ~~Auth / JWT yok~~ | ✅ Tamamlandı | JWT + `PassportStrategy` + `RolesGuard` + httpOnly cookie ile güvence altına alındı |
 | Rate Limiting yok | 🟡 Orta | `@nestjs/throttler` ile endpoint başına istek sınırı konulmalı |
-| CORS çok açık (`*`) | 🟡 Orta | Production'da `origin` whitelist ile kısıtlanmalı |
+| CORS `credentials: true` ile yapılandırıldı | ✅ Tamamlandı | `origin` whitelist + `credentials: true` — production için `CORS_ORIGIN` env'den okunur |
 | MongoDB ObjectId doğrulaması yok | 🟡 Orta | `ParseMongoIdPipe` ile geçersiz ID formatları erken bloklanmalı |
 | Input sanitizasyon | 🟢 Düşük | `class-sanitizer` veya `helmet` header güvenliği eklenebilir |
 | HTTPS zorunluluğu yok | 🟡 Orta | Production'da reverse proxy (nginx) ile TLS terminasyonu sağlanmalı |
@@ -124,14 +124,18 @@ AGREEMENT → EARNEST_MONEY → TITLE_DEED → COMPLETED
 
 ## 7. API Endpoint Referansı
 
-| Method | Endpoint | Açıklama |
-|--------|----------|---------|
-| `GET` | `/transactions` | Tüm işlemleri listele |
-| `POST` | `/transactions` | Yeni işlem oluştur |
-| `PATCH` | `/transactions/:id/status` | Statü güncelle (sıralı geçiş zorunlu) |
-| `PATCH` | `/transactions/:id/cancel` | İşlemi iptal et |
-| `PATCH` | `/transactions/:id/rollback` | Bir önceki aşamaya geri al |
-| `GET` | `/logs?page=1&limit=20` | Audit logları sayfalı listele *(planlanan)* |
+| Method | Endpoint | Yetki | Açıklama |
+|--------|----------|-------|----------|
+| `GET` | `/transactions` | ADMIN, AGENT | ADMIN tüm işlemleri, AGENT yalnızca kendi işlemlerini görür |
+| `POST` | `/transactions` | ADMIN, AGENT | Yeni işlem oluştur (agentId JWT'den otomatik alınır) |
+| `PATCH` | `/transactions/:id/status` | ADMIN, AGENT | Statü güncelle — AGENT yalnızca kendi kaydını güncelleyebilir |
+| `PATCH` | `/transactions/:id/cancel` | ADMIN, AGENT | İşlemi iptal et |
+| `PATCH` | `/transactions/:id/rollback` | ADMIN, AGENT | Bir önceki aşamaya geri al |
+| `POST` | `/auth/login` | Public | Giriş — accessToken (body) + refreshToken (httpOnly cookie) döner |
+| `POST` | `/auth/refresh` | Public | Cookie'deki refreshToken ile yeni accessToken al |
+| `POST` | `/auth/logout` | Public | Cookie temizle + DB'deki hashedRefreshToken sıfırla |
+| `POST` | `/users/agent` | ADMIN | Yeni danışman hesabı oluştur |
+| `GET` | `/logs?page=1&limit=20` | ADMIN | Audit logları sayfalı listele *(planlanan)* |
 
 ---
 
@@ -176,4 +180,46 @@ Aktif bir şirkette her işlem için birden fazla log üretilir. 100 danışman 
 
 ---
 
-*Bu doküman proje boyunca güncel tutulmaktadır. Son güncelleme: Aşama 8 (Audit Log, Komisyon Görünürlüğü ve Scaling Kararları)*
+## 10. Kimlik Doğrulama ve Oturum Yönetimi Mimarisi
+
+### 10.1 Token Saklama Kararı: httpOnly Cookie (Sektör Standardı)
+
+**Karar:** Access Token memory'de (Pinia reactive ref), Refresh Token httpOnly cookie'de saklanır.
+
+| Yöntem | XSS Koruması | CSRF Riski | Tercih |
+|--------|-------------|-----------|--------|
+| `localStorage` | ❌ Zayıf — JS erişebilir | ✅ Yok | ❌ Seçilmedi |
+| `sessionStorage` | ❌ Zayıf — JS erişebilir | ✅ Yok | ❌ Seçilmedi |
+| `httpOnly Cookie` | ✅ Güçlü — JS erişemez | ⚠️ `sameSite: strict` ile önlendi | ✅ **Seçildi** |
+| `Memory only` | ✅ En güçlü | ✅ Yok | ✅ Access Token için seçildi |
+
+**Uygulama Detayı:**
+- `accessToken` → Pinia store reactive ref (sayfa yenilenince sıfırlanır)
+- `refreshToken` → `httpOnly: true`, `sameSite: 'strict'`, `secure: true (production)` cookie
+- Sayfa yenilenince `plugins/auth.client.ts` plugin'i cookie üzerinden `POST /auth/refresh` çağırarak oturumu sessizce yeniler (**Silent Refresh** pattern)
+- `credentials: 'include'` → Tüm cross-origin API isteklerinde cookie otomatik gönderilir
+
+### 10.2 Token Rotasyonu
+
+Her `POST /auth/refresh` isteğinde yeni bir refresh token üretilir ve eski token DB'de invalidate edilir. Bu sayede çalınan bir refresh token tek kullanımlıktır.
+
+### 10.3 Veri İzolasyonu (Rol Bazlı Erişim)
+
+**Karar:** `Transaction` şemasına `agentId` (ObjectId, ref: User) alanı eklendi. `agentName` string alanı backward compat için optional bırakıldı, yeni işlemlerde kullanılmıyor.
+
+- `agentId` değeri client'tan gelmiyor — JWT payload'ındaki `sub` (userId) backend'de inject ediliyor
+- `findAll()` metodu rol'e göre filtreliyor: ADMIN tüm kayıtları, AGENT yalnızca `agentId === user.sub` olanları görür
+- `assertOwnership()` helper'ı PATCH endpoint'lerinde AGENT'ın başkasının işlemini değiştirmesini engeller
+
+### 10.4 CORS Yapılandırması
+
+```
+origin: process.env.CORS_ORIGIN ?? 'http://localhost:3000'
+credentials: true
+```
+
+Production'da `CORS_ORIGIN` env değişkeninden okunur. `credentials: true` olmadan httpOnly cookie'ler cross-origin isteğe eklenmez.
+
+---
+
+*Bu doküman proje boyunca güncel tutulmaktadır. Son güncelleme: Auth & Oturum Yönetimi Mimarisi (httpOnly Cookie, Rol Bazlı İzolasyon)*

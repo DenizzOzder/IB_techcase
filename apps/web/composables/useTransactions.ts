@@ -1,18 +1,37 @@
 import { ref } from 'vue';
 import { ITransaction, TransactionStatus, ICreateTransactionRequest } from '@repo/types';
-import { $fetch } from 'ofetch'; // IDE Auto-import uyarısını çözmek için explicit import
+import { $fetch } from 'ofetch';
+import { useAuthStore } from '@/stores/authStore';
 
+const API = 'http://localhost:3001';
+
+/**
+ * Tüm API isteklerine Authorization header ve credentials eklenir.
+ * - Authorization: Bearer <accessToken> → JWT korumalı endpoint'ler için
+ * - credentials: 'include' → httpOnly cookie otomatik gönderilir
+ */
 export const useTransactions = () => {
   const isFetching = ref(false);
   const error = ref<string | null>(null);
   const transactions = ref<ITransaction[]>([]);
 
-  // 1. Tüm Emlak İşlemlerini Backend'den Çek (HTTP GET)
+  const getHeaders = () => {
+    const authStore = useAuthStore();
+    return {
+      'Content-Type': 'application/json',
+      ...(authStore.accessToken ? { Authorization: `Bearer ${authStore.accessToken}` } : {}),
+    };
+  };
+
+  // 1. Emlak İşlemlerini Çek — Rol bazlı filtreleme backend'de yapılır
   const fetchAll = async () => {
     isFetching.value = true;
     error.value = null;
     try {
-      const res = await $fetch<ITransaction[]>('http://localhost:3001/transactions');
+      const res = await $fetch<ITransaction[]>(`${API}/transactions`, {
+        credentials: 'include',
+        headers: getHeaders(),
+      });
       transactions.value = res;
     } catch (e: any) {
       error.value = e.data?.message?.toString() || e.message || 'Sunucuyla bağlantı kurulamadı.';
@@ -21,47 +40,46 @@ export const useTransactions = () => {
     }
   };
 
-  // 2. Yeni Emlak Kaydı (HTTP POST) - Validation Testlerini Test Eder
+  // 2. Yeni Emlak Kaydı — agentId backend tarafında JWT'den alınır
   const createTransaction = async (payload: ICreateTransactionRequest) => {
     isFetching.value = true;
     error.value = null;
     try {
-      await $fetch('http://localhost:3001/transactions', {
+      await $fetch(`${API}/transactions`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: payload
+        headers: getHeaders(),
+        credentials: 'include',
+        body: payload,
       });
-      // Hata barını sil ve Data listesini güncelle
       error.value = null;
       await fetchAll();
-      return true; 
+      return true;
     } catch (e: any) {
-      // NestJS Class-Validator Hata Ayıklayıcısı
-      // Array gelirse virgülle ayır, stringse direkt bas.
-      error.value = Array.isArray(e.data?.message) 
-        ? e.data.message.join(' | ') 
+      error.value = Array.isArray(e.data?.message)
+        ? e.data.message.join(' | ')
         : (e.data?.message || 'Kayıt sırasında bilinmeyen hata.');
-      return false; 
+      return false;
     } finally {
       isFetching.value = false;
     }
   };
 
-  // 3. Tapu State'ini İlerletme (HTTP PATCH) -> Completed olursa Komisyon tetiklenir
+  // 3. Statü İlerletme
   const updateStatus = async (id: string, newStatus: TransactionStatus) => {
     isFetching.value = true;
     error.value = null;
     try {
-      await $fetch(`http://localhost:3001/transactions/${id}/status`, {
+      await $fetch(`${API}/transactions/${id}/status`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: { status: newStatus }
+        headers: getHeaders(),
+        credentials: 'include',
+        body: { status: newStatus },
       });
       error.value = null;
       await fetchAll();
     } catch (e: any) {
-      error.value = Array.isArray(e.data?.message) 
-        ? e.data.message.join(' | ') 
+      error.value = Array.isArray(e.data?.message)
+        ? e.data.message.join(' | ')
         : (e.data?.message || 'Tapu statüsü güncellenemedi.');
     } finally {
       isFetching.value = false;
@@ -72,7 +90,11 @@ export const useTransactions = () => {
     isFetching.value = true;
     error.value = null;
     try {
-      await $fetch(`http://localhost:3001/transactions/${id}/cancel`, { method: 'PATCH' });
+      await $fetch(`${API}/transactions/${id}/cancel`, {
+        method: 'PATCH',
+        headers: getHeaders(),
+        credentials: 'include',
+      });
       error.value = null;
       await fetchAll();
     } catch (e: any) {
@@ -88,7 +110,11 @@ export const useTransactions = () => {
     isFetching.value = true;
     error.value = null;
     try {
-      await $fetch(`http://localhost:3001/transactions/${id}/rollback`, { method: 'PATCH' });
+      await $fetch(`${API}/transactions/${id}/rollback`, {
+        method: 'PATCH',
+        headers: getHeaders(),
+        credentials: 'include',
+      });
       error.value = null;
       await fetchAll();
     } catch (e: any) {
@@ -108,6 +134,6 @@ export const useTransactions = () => {
     createTransaction,
     updateStatus,
     cancelTransaction,
-    rollbackTransaction
-  }
-}
+    rollbackTransaction,
+  };
+};

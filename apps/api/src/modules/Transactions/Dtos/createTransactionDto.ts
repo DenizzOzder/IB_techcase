@@ -10,9 +10,7 @@ export class CreateTransactionDto implements ICreateTransactionRequest {
   @IsPositive({ message: 'Satış tutarı sıfırdan büyük olmalıdır. Lütfen geçerli bir tutar girin.' })
   propertyPrice: number;
 
-  @IsString({ message: 'Danışman adı geçerli bir metin olmalıdır.' })
-  @IsNotEmpty({ message: 'Danışman adı boş bırakılamaz.' })
-  agentName: string;
+  // agentId → JWT token'dan alınır, client payload'ında gelmez (güvenlik gereği)
 
   @IsNumber({}, { message: 'Komisyon oranı sayısal bir değer olmalıdır.' })
   @Min(0, { message: 'Komisyon oranı en az %0 olabilir.' })

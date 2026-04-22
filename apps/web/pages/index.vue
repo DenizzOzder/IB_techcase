@@ -35,13 +35,36 @@
           </div>
         </div>
         
-        <button 
-          @click="toggleTheme" 
-          class="rounded-full p-2.5 backdrop-blur-md border border-surface bg-surface/50 text-text shadow-sm hover:scale-105 transition-transform"
-        >
-          <span v-if="$colorMode.value === 'dark'">☀️ Açık Tema</span>
-          <span v-else>🌙 Koyu Tema</span>
-        </button>
+        <!-- Sağ: Kullanıcı bilgisi + Tema + Çıkış -->
+        <div class="flex items-center gap-3">
+          <!-- Kullanıcı Bilgisi -->
+          <div class="flex items-center gap-2 rounded-full px-4 py-2 bg-surface/60 border border-white/30 backdrop-blur-sm dark:border-gray-700/50 shadow-sm">
+            <span class="text-sm">{{ authStore.isAdmin ? '👑' : '👤' }}</span>
+            <span class="text-sm font-semibold text-text">{{ authStore.displayName }}</span>
+            <span class="text-xs px-2 py-0.5 rounded-full font-medium" :class="authStore.isAdmin ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'">
+              {{ authStore.isAdmin ? 'Admin' : 'Danışman' }}
+            </span>
+          </div>
+
+          <!-- Tema Butonu -->
+          <button 
+            @click="toggleTheme" 
+            class="rounded-full p-2.5 backdrop-blur-md border border-surface bg-surface/50 text-text shadow-sm hover:scale-105 transition-transform"
+          >
+            <span v-if="$colorMode.value === 'dark'">☀️</span>
+            <span v-else>🌙</span>
+          </button>
+
+          <!-- Çıkış Butonu -->
+          <button
+            id="logout-btn"
+            @click="handleLogout"
+            class="rounded-full p-2.5 backdrop-blur-md border border-surface bg-surface/50 text-danger hover:bg-red-50 dark:hover:bg-red-950/30 shadow-sm hover:scale-105 transition-all"
+            title="Çıkış Yap"
+          >
+            🚪
+          </button>
+        </div>
       </header>
 
       <!-- YENİ İŞLEM FORMU -->
@@ -51,10 +74,6 @@
           <div>
             <label class="block text-sm font-medium mb-1">Mülk Adı</label>
             <input v-model="formData.propertyTitle" type="text" required class="w-full rounded-md border border-gray-300 bg-transparent p-2 dark:border-gray-700" placeholder="Örn: Bebek Yalı" />
-          </div>
-          <div>
-            <label class="block text-sm font-medium mb-1">Danışman Adı</label>
-            <input v-model="formData.agentName" type="text" required class="w-full rounded-md border border-gray-300 bg-transparent p-2 dark:border-gray-700" placeholder="Örn: Can Deniz" />
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">Satış Tutarı (₺)</label>
@@ -187,12 +206,17 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useTransactions } from '@/composables/useTransactions';
+import { useAuthStore } from '@/stores/authStore';
 import { TransactionStatus, ITransaction } from '@repo/types';
+
+definePageMeta({ middleware: 'auth' });
+
+const authStore = useAuthStore();
+const { logout } = useAuth();
 
 const isFormOpen = ref(false);
 const formData = ref({
   propertyTitle: '',
-  agentName: '',
   propertyPrice: null as number | null,
   commissionRate: null as number | null
 });
@@ -213,14 +237,17 @@ onMounted(() => { fetchAll(); });
 const submitForm = async () => {
   const isSuccess = await createTransaction({
     propertyTitle: formData.value.propertyTitle,
-    agentName: formData.value.agentName,
     propertyPrice: Number(formData.value.propertyPrice),
     commissionRate: Number(formData.value.commissionRate)
   });
   if (isSuccess) {
-    formData.value = { propertyTitle: '', agentName: '', propertyPrice: null, commissionRate: null };
+    formData.value = { propertyTitle: '', propertyPrice: null, commissionRate: null };
     isFormOpen.value = false;
   }
+};
+
+const handleLogout = async () => {
+  await logout();
 };
 
 const formatCurrency = (val: number) =>

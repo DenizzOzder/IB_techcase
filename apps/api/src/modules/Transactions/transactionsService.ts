@@ -1,11 +1,11 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Transaction, TransactionDocument } from '@/modules/Transactions/Schemas/transactionSchema';
 import { CommissionsService } from '@/modules/Commissions/commissionsService';
 import { CreateTransactionDto } from '@/modules/Transactions/Dtos/createTransactionDto';
 import { UpdateTransactionStatusDto } from '@/modules/Transactions/Dtos/updateTransactionStatusDto';
-import { TransactionStatus } from '@repo/types';
+import { TransactionStatus, Role, IJwtPayload } from '@repo/types';
 
 @Injectable()
 export class TransactionsService {
@@ -14,13 +14,27 @@ export class TransactionsService {
     private readonly commissionsService: CommissionsService
   ) {}
 
-  async findAll(): Promise<TransactionDocument[]> {
-    // Tüm kayıtları listelemek için eklendi (Aşama 6 Frontend Get isteği için)
-    return this.transactionModel.find().exec();
+  /**
+   * Rol bazlı veri erişimi:
+   * - ADMIN → Tüm işlemleri görür
+   * - AGENT → Yalnızca kendi agentId'siyle açtığı işlemleri görür (veri izolasyonu)
+   */
+  async findAll(user: IJwtPayload): Promise<TransactionDocument[]> {
+    if (user.role === Role.ADMIN) {
+      return this.transactionModel.find().exec();
+    }
+    return this.transactionModel.find({ agentId: new Types.ObjectId(user.sub) }).exec();
   }
 
-  async createTransaction(createDto: CreateTransactionDto): Promise<TransactionDocument> {
-    const createdTransaction = new this.transactionModel(createDto);
+  /**
+   * Yeni işlem oluşturur. agentId JWT payload'ından (controller) alınır,
+   * client payload'ından gelmez — güvenlik politikası gereği.
+   */
+  async createTransaction(createDto: CreateTransactionDto, agentId: string): Promise<TransactionDocument> {
+    const createdTransaction = new this.transactionModel({
+      ...createDto,
+      agentId: new Types.ObjectId(agentId),
+    });
     return createdTransaction.save();
   }
 
@@ -42,13 +56,25 @@ export class TransactionsService {
     return idx > 0 ? this.STATUS_FLOW[idx - 1] : null;
   }
 
-  async updateTransactionStatus(id: string, updateDto: UpdateTransactionStatusDto): Promise<TransactionDocument> {
+  /**
+   * Sahiplik kontrolü: AGENT yalnızca kendi işlemini güncelleyebilir.
+   * ADMIN herhangi bir işlemi güncelleyebilir.
+   */
+  private assertOwnership(transaction: TransactionDocument, user: IJwtPayload): void {
+    if (user.role === Role.AGENT && transaction.agentId?.toString() !== user.sub) {
+      throw new BadRequestException('Bu işlemi güncelleme yetkiniz bulunmuyor.');
+    }
+  }
+
+  async updateTransactionStatus(id: string, updateDto: UpdateTransactionStatusDto, user: IJwtPayload): Promise<TransactionDocument> {
     const session = await this.transactionModel.db.startSession();
     session.startTransaction();
 
     try {
       const transaction = await this.transactionModel.findById(id).session(session);
       if (!transaction) throw new NotFoundException('Aradığınız emlak işlemi bulunamadı.');
+
+      this.assertOwnership(transaction, user);
 
       const currentStatus = transaction.status;
 
@@ -89,9 +115,10 @@ export class TransactionsService {
     }
   }
 
-  async cancelTransaction(id: string): Promise<TransactionDocument> {
+  async cancelTransaction(id: string, user: IJwtPayload): Promise<TransactionDocument> {
     const transaction = await this.transactionModel.findById(id);
     if (!transaction) throw new NotFoundException('Aradığınız emlak işlemi bulunamadı.');
+    this.assertOwnership(transaction, user);
     if (transaction.status === TransactionStatus.COMPLETED) {
       throw new BadRequestException('Tamamlanmış bir işlem iptal edilemez. Lütfen yöneticinizle iletişime geçin.');
     }
@@ -102,9 +129,10 @@ export class TransactionsService {
     return transaction.save();
   }
 
-  async rollbackTransactionStatus(id: string): Promise<TransactionDocument> {
+  async rollbackTransactionStatus(id: string, user: IJwtPayload): Promise<TransactionDocument> {
     const transaction = await this.transactionModel.findById(id);
     if (!transaction) throw new NotFoundException('Aradığınız emlak işlemi bulunamadı.');
+    this.assertOwnership(transaction, user);
     if (transaction.status === TransactionStatus.CANCELLED) {
       throw new BadRequestException('İptal edilmiş bir işlem geri alınamaz.');
     }
@@ -118,4 +146,4 @@ export class TransactionsService {
     transaction.status = previousStatus;
     return transaction.save();
   }
-}
+}

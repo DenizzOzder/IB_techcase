@@ -18,8 +18,7 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('Kullanıcı bulunamadı.');
     }
-    
-    // Check if user has password set
+
     if (!user.password) {
       throw new UnauthorizedException('Geçersiz şifre.');
     }
@@ -34,11 +33,11 @@ export class AuthService {
 
   async login(loginDto: ILoginRequest): Promise<ILoginResponse> {
     const user = await this.validateUser(loginDto.email, loginDto.password || '');
-    
+
     const payload: IJwtPayload = { sub: user._id.toString(), email: user.email, role: user.role };
-    
+
     const accessToken = this.jwtService.sign(payload);
-    
+
     const refreshToken = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
       expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN') as any,
@@ -71,7 +70,7 @@ export class AuthService {
     }
 
     const payload: IJwtPayload = { sub: user._id.toString(), email: user.email, role: user.role };
-    
+
     const newAccessToken = this.jwtService.sign(payload);
     const newRefreshToken = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
@@ -91,6 +90,22 @@ export class AuthService {
         role: user.role,
       }
     };
+  }
+
+  /**
+   * httpOnly cookie'den gelen refresh token string'ini doğrulayarak oturumu yeniler.
+   * userId'yi token'dan çözümler — controller body'den almaz (güvenlik).
+   */
+  async refreshTokensByToken(refreshToken: string): Promise<ILoginResponse> {
+    let payload: IJwtPayload;
+    try {
+      payload = this.jwtService.verify<IJwtPayload>(refreshToken, {
+        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+      });
+    } catch {
+      throw new UnauthorizedException('Geçersiz veya süresi dolmuş refresh token.');
+    }
+    return this.refreshTokens(payload.sub, refreshToken);
   }
 
   async logout(userId: string) {
