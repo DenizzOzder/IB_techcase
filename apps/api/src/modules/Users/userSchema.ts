@@ -18,8 +18,11 @@ export class User {
   @Prop({ type: String, enum: Role, default: Role.AGENT })
   role: Role;
 
-  @Prop({ required: false })
-  hashedRefreshToken?: string;
+  @Prop({ type: String, default: null })
+  hashedRefreshToken: string | null;
+
+  @Prop({ type: Boolean, default: true })
+  isActive: boolean;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

@@ -1,22 +1,18 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { User, UserSchema } from '@/modules/Users/userSchema';
-import { UsersService } from '@/modules/Users/usersService';
-import { UsersController } from '@/modules/Users/usersController';
+import { StatsController } from '@/modules/Stats/statsController';
+import { StatsService } from '@/modules/Stats/statsService';
 import { Transaction, TransactionSchema } from '@/modules/Transactions/Schemas/transactionSchema';
 import { Commission, CommissionSchema } from '@/modules/Commissions/Schemas/commissionSchema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
-      { name: User.name, schema: UserSchema },
       { name: Transaction.name, schema: TransactionSchema },
       { name: Commission.name, schema: CommissionSchema },
-    ])
+    ]),
   ],
-  controllers: [UsersController],
-  providers: [UsersService],
-  exports: [UsersService],
+  controllers: [StatsController],
+  providers: [StatsService],
 })
-export class UsersModule {}
-
+export class StatsModule {}

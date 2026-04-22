@@ -3,15 +3,17 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Transaction, TransactionDocument } from '@/modules/Transactions/Schemas/transactionSchema';
 import { CommissionsService } from '@/modules/Commissions/commissionsService';
+import { AuditLogsService } from '@/modules/AuditLogs/auditLogsService';
 import { CreateTransactionDto } from '@/modules/Transactions/Dtos/createTransactionDto';
 import { UpdateTransactionStatusDto } from '@/modules/Transactions/Dtos/updateTransactionStatusDto';
-import { TransactionStatus, Role, IJwtPayload } from '@repo/types';
+import { TransactionStatus, Role, IJwtPayload, AuditLogAction } from '@repo/types';
 
 @Injectable()
 export class TransactionsService {
   constructor(
     @InjectModel(Transaction.name) private transactionModel: Model<TransactionDocument>,
-    private readonly commissionsService: CommissionsService
+    private readonly commissionsService: CommissionsService,
+    private readonly auditLogsService: AuditLogsService
   ) {}
 
   /**
@@ -35,7 +37,18 @@ export class TransactionsService {
       ...createDto,
       agentId: new Types.ObjectId(agentId),
     });
-    return createdTransaction.save();
+    
+    await createdTransaction.save();
+
+    await this.auditLogsService.logAction(
+      createdTransaction._id,
+      agentId,
+      createDto.propertyTitle,
+      AuditLogAction.CREATED,
+      TransactionStatus.AGREEMENT
+    );
+
+    return createdTransaction;
   }
 
   // State Machine geçiş sırasını zorlayan yardımcı metot (DRY prensibi)
@@ -103,6 +116,16 @@ export class TransactionsService {
         await this.commissionsService.calculateCommission(transaction, session);
       }
 
+      await this.auditLogsService.logAction(
+        transaction._id,
+        user.sub,
+        transaction.propertyTitle,
+        updateDto.status === TransactionStatus.COMPLETED ? AuditLogAction.COMPLETED : AuditLogAction.ADVANCED,
+        updateDto.status,
+        previousStatus,
+        session
+      );
+
       await session.commitTransaction();
       session.endSession();
       return transaction;
@@ -125,8 +148,21 @@ export class TransactionsService {
     if (transaction.status === TransactionStatus.CANCELLED) {
       throw new BadRequestException('Bu işlem zaten iptal edilmiş.');
     }
+    
+    const previousStatus = transaction.status;
     transaction.status = TransactionStatus.CANCELLED;
-    return transaction.save();
+    await transaction.save();
+
+    await this.auditLogsService.logAction(
+      transaction._id,
+      user.sub,
+      transaction.propertyTitle,
+      AuditLogAction.CANCELLED,
+      TransactionStatus.CANCELLED,
+      previousStatus
+    );
+
+    return transaction;
   }
 
   async rollbackTransactionStatus(id: string, user: IJwtPayload): Promise<TransactionDocument> {
@@ -143,7 +179,20 @@ export class TransactionsService {
     if (!previousStatus) {
       throw new BadRequestException('Bu işlem zaten başlangıç aşamasında, daha geriye dönülemiyor.');
     }
+    
+    const oldStatus = transaction.status;
     transaction.status = previousStatus;
-    return transaction.save();
+    await transaction.save();
+
+    await this.auditLogsService.logAction(
+      transaction._id,
+      user.sub,
+      transaction.propertyTitle,
+      AuditLogAction.ROLLED_BACK,
+      transaction.status,
+      oldStatus
+    );
+
+    return transaction;
   }
 }

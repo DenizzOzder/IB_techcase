@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Get, Delete, Param } from '@nestjs/common';
 import { UsersService } from '@/modules/Users/usersService';
 import { Roles } from '@/Common/Decorators/rolesDecorator';
 import { Role } from '@repo/types';
@@ -25,4 +25,24 @@ export class UsersController {
       }
     };
   }
+
+  @Get('agents')
+  @Roles(Role.ADMIN)
+  async getAgents() {
+    return this.usersService.findAllAgents();
+  }
+
+  @Delete('agents/:id')
+  @Roles(Role.ADMIN)
+  async deactivateAgent(@Param('id') id: string) {
+    await this.usersService.deactivateAgent(id);
+    return { message: 'Danışman başarıyla pasife alındı.' };
+  }
+
+  @Get('agents/:id/stats')
+  @Roles(Role.ADMIN)
+  async getAgentStats(@Param('id') id: string) {
+    return this.usersService.getAgentStats(id);
+  }
 }
+

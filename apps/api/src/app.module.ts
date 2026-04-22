@@ -7,6 +7,8 @@ import { TransactionsModule } from '@/modules/Transactions/transactionsModule';
 import { CommissionsModule } from '@/modules/Commissions/commissionsModule';
 import { AuthModule } from '@/modules/Auth/authModule';
 import { UsersModule } from '@/modules/Users/usersModule';
+import { StatsModule } from '@/modules/Stats/statsModule';
+import { AuditLogsModule } from '@/modules/AuditLogs/auditLogsModule';
 
 @Module({
   imports: [
@@ -25,6 +27,8 @@ import { UsersModule } from '@/modules/Users/usersModule';
     CommissionsModule,
     AuthModule,
     UsersModule,
+    StatsModule,
+    AuditLogsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

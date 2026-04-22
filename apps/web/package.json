@@ -14,10 +14,12 @@
     "@nuxtjs/tailwindcss": "^6.11.4",
     "@pinia/nuxt": "^0.5.1",
     "@repo/types": "workspace:*",
+    "chart.js": "^4.5.1",
     "nuxt": "^3.11.2",
     "ofetch": "^1.5.1",
     "pinia": "^2.1.7",
     "vue": "^3.4.21",
+    "vue-chartjs": "^5.3.3",
     "vue-router": "^4.3.0"
   }
 }

@@ -99,3 +99,84 @@ export interface IRegisterAgentRequest {
   email: string;
   password?: string;
 }
+
+// ─── Admin İstatistik Tipleri ──────────────────────────────────────────────
+
+export interface IStatsTrendItem {
+  label: string;       // "Oca", "Şub" ... veya "2021", "2022"
+  volume: number;      // O dönemdeki toplam satış tutarı
+  commission: number;  // O dönemdeki toplam komisyon
+  count: number;       // İşlem sayısı
+}
+
+export interface IStatsStatusItem {
+  status: TransactionStatus;
+  count: number;
+}
+
+export interface IStatsSummary {
+  totalVolume: number;       // Tamamlanan işlemlerin toplam satış tutarı
+  totalCommission: number;   // Toplam komisyon geliri
+  totalTransactions: number; // Tüm zamanların toplam işlem sayısı
+  completedCount: number;
+  cancelledCount: number;
+  activeCount: number;       // AGREEMENT + EARNEST_MONEY + TITLE_DEED
+}
+
+export interface IStatsResponse {
+  summary: IStatsSummary;
+  trend: IStatsTrendItem[];
+  statusDistribution: IStatsStatusItem[];
+  period: 'monthly' | 'yearly';
+}
+
+// ─── Danışman (Agent) Yönetimi Tipleri ─────────────────────────────────────────
+
+export interface IAgentResponse {
+  _id: string;
+  name: string;
+  email: string;
+  role: Role;
+  createdAt: string;
+  isActive: boolean;
+}
+
+export interface IAgentStats {
+  totalTransactions: number;
+  completedTransactions: number;
+  totalVolume: number;
+  totalCommission: number;
+}
+
+export interface IAgentDetailResponse extends IAgentResponse {
+  stats: IAgentStats;
+}
+
+// ─── Sistem Logları (Audit Logs) Tipleri ───────────────────────────────────────
+
+export enum AuditLogAction {
+  CREATED = 'CREATED',
+  ADVANCED = 'ADVANCED',
+  ROLLED_BACK = 'ROLLED_BACK',
+  CANCELLED = 'CANCELLED',
+  COMPLETED = 'COMPLETED',
+}
+
+export interface IAuditLog {
+  _id: string;
+  transactionId: string;
+  agentId: string;
+  agentName: string; // Hızlı gösterim için
+  propertyTitle: string; // Hızlı gösterim için
+  action: AuditLogAction;
+  previousStatus?: TransactionStatus;
+  newStatus: TransactionStatus;
+  createdAt: string;
+}
+
+export interface IAuditLogsResponse {
+  data: IAuditLog[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
