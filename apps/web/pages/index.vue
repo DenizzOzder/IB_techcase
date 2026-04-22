@@ -46,6 +46,18 @@
             </div>
           </div>
           
+          <!-- AGENT KİŞİSEL İSTATİSTİKLERİ (Mini Kartlar) -->
+          <div v-if="!authStore.isAdmin && myStats" class="flex items-center gap-4 mt-6 md:mt-0">
+            <div class="px-5 py-3 rounded-2xl bg-white/40 border border-white/50 backdrop-blur-sm dark:bg-gray-800/40 dark:border-gray-700/50 shadow-sm flex flex-col items-end">
+              <span class="text-[10px] uppercase font-bold text-gray-400">Toplam Kazanç</span>
+              <span class="text-lg font-extrabold text-primary-500">{{ formatCurrency(myStats.totalCommission) }}</span>
+            </div>
+            <div class="px-5 py-3 rounded-2xl bg-white/40 border border-white/50 backdrop-blur-sm dark:bg-gray-800/40 dark:border-gray-700/50 shadow-sm flex flex-col items-end">
+              <span class="text-[10px] uppercase font-bold text-gray-400">Tamamlanan İşlem</span>
+              <span class="text-lg font-extrabold text-purple-500">{{ myStats.completedTransactions }} / {{ myStats.totalTransactions }}</span>
+            </div>
+          </div>
+          
           <!-- Sağ Üst: Tema & Çıkış -->
           <div class="flex items-center gap-3">
             <div class="flex items-center gap-2 rounded-full px-4 py-2 bg-surface/40 border border-white/20 backdrop-blur-md shadow-sm">
@@ -122,9 +134,11 @@
           v-if="!authStore.isAdmin || activeTab === 'transactions'"
           :transactions="transactions"
           :is-fetching="isFetchingTx"
+          :has-more="hasMore"
           @advance="advanceStatus"
           @cancel="confirmCancel"
           @rollback="confirmRollback"
+          @load-more="loadMoreTransactions"
         />
 
         <!-- Tab: Danışmanlar -->
@@ -204,8 +218,11 @@ const {
   fetchAgents,
   createAgent,
   deactivateAgent,
-  fetchAgentStats
+  fetchAgentStats,
+  fetchMyStats
 } = useAgents();
+
+const myStats = ref<any>(null);
 
 // Tab state
 const activeTab = ref<'transactions' | 'agents' | 'logs'>('transactions');
@@ -221,10 +238,12 @@ const clearErrors = () => {
 };
 
 // Initial load
-onMounted(() => {
-  fetchAll();
+onMounted(async () => {
+  await fetchAll(1, 20, false);
   if (authStore.isAdmin) {
     fetchAgents();
+  } else {
+    myStats.value = await fetchMyStats();
   }
 });
 
@@ -235,7 +254,6 @@ watch(activeTab, (newTab) => {
   }
 });
 
-// --- Transactions Logic ---
 const submitForm = async () => {
   const ok = await createTransaction({
     propertyTitle: formData.value.propertyTitle,
@@ -245,6 +263,12 @@ const submitForm = async () => {
   if (ok) {
     formData.value = { propertyTitle: '', propertyPrice: null, commissionRate: null };
     isFormOpen.value = false;
+  }
+};
+
+const loadMoreTransactions = async () => {
+  if (hasMore.value && !isFetchingTx.value) {
+    await fetchAll(currentPage.value + 1, 20, true);
   }
 };
 
@@ -285,6 +309,9 @@ const openAgentProfile = async (id: string) => {
   isProfileOpen.value = true;
   await fetchAgentStats(id);
 };
+
+const formatCurrency = (val: number) => 
+  new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(val);
 
 const handleLogout = () => logout();
 const toggleTheme = () => colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark';

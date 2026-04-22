@@ -5,6 +5,9 @@ import { Role } from '@repo/types';
 import { RolesGuard } from '@/Common/Guards/rolesGuard';
 import { JwtAuthGuard } from '@/Common/Guards/jwtAuthGuard';
 import { RegisterAgentDto } from '@/modules/Users/Dtos/registerAgentDto';
+import { ParseMongoIdPipe } from '@/Common/Pipes/parseMongoIdPipe';
+import { CurrentUser } from '@/Common/Decorators/currentUserDecorator';
+import type { IJwtPayload } from '@repo/types';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('users')
@@ -34,15 +37,21 @@ export class UsersController {
 
   @Delete('agents/:id')
   @Roles(Role.ADMIN)
-  async deactivateAgent(@Param('id') id: string) {
+  async deactivateAgent(@Param('id', ParseMongoIdPipe) id: string) {
     await this.usersService.deactivateAgent(id);
     return { message: 'Danışman başarıyla pasife alındı.' };
   }
 
   @Get('agents/:id/stats')
   @Roles(Role.ADMIN)
-  async getAgentStats(@Param('id') id: string) {
+  async getAgentStats(@Param('id', ParseMongoIdPipe) id: string) {
     return this.usersService.getAgentStats(id);
+  }
+
+  @Get('me/stats')
+  @Roles(Role.AGENT, Role.ADMIN)
+  async getMyStats(@CurrentUser() user: IJwtPayload) {
+    return this.usersService.getAgentStats(user.sub);
   }
 }
 

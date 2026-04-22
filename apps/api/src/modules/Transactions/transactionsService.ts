@@ -21,11 +21,42 @@ export class TransactionsService {
    * - ADMIN → Tüm işlemleri görür
    * - AGENT → Yalnızca kendi agentId'siyle açtığı işlemleri görür (veri izolasyonu)
    */
-  async findAll(user: IJwtPayload): Promise<TransactionDocument[]> {
-    if (user.role === Role.ADMIN) {
-      return this.transactionModel.find().exec();
-    }
-    return this.transactionModel.find({ agentId: new Types.ObjectId(user.sub) }).exec();
+  async findAll(user: IJwtPayload, page: number = 1, limit: number = 20): Promise<any[]> {
+    const skip = (page - 1) * limit;
+    const matchStage = user.role === Role.ADMIN ? {} : { agentId: new Types.ObjectId(user.sub) };
+
+    const pipeline = [
+      { $match: matchStage },
+      { $sort: { createdAt: -1 } as any },
+      { $skip: skip },
+      { $limit: limit },
+      {
+        $lookup: {
+          from: 'commissions',
+          localField: '_id',
+          foreignField: 'transactionId',
+          as: 'commissionData'
+        }
+      },
+      {
+        $addFields: {
+          calculatedCommission: {
+            $cond: {
+              if: { $gt: [{ $size: '$commissionData' }, 0] },
+              then: { $arrayElemAt: ['$commissionData.amount', 0] },
+              else: null
+            }
+          }
+        }
+      },
+      {
+        $project: {
+          commissionData: 0
+        }
+      }
+    ];
+
+    return this.transactionModel.aggregate(pipeline).exec();
   }
 
   /**

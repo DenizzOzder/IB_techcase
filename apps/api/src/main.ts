@@ -3,9 +3,11 @@ import { AppModule } from '@/app.module';
 import { ValidationPipe } from '@nestjs/common';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const cookieParser = require('cookie-parser');
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.use(helmet());
 
   /**
    * Güvenlik Politikası: Access Token → Memory (Pinia), Refresh Token → httpOnly Cookie

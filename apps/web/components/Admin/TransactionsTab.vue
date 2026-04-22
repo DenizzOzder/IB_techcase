@@ -20,6 +20,18 @@
         @rollback="$emit('rollback', tx)"
       />
     </div>
+
+    <!-- LOAD MORE -->
+    <div v-if="hasMore && transactions.length > 0" class="flex justify-center pt-8">
+      <BaseButton 
+        variant="secondary" 
+        :loading="isFetching" 
+        @click="$emit('load-more')"
+        class="px-8 py-3 rounded-full border-2"
+      >
+        Daha Fazla Yükle
+      </BaseButton>
+    </div>
   </div>
 </template>
 
@@ -29,11 +41,13 @@ import { ITransaction } from '@repo/types';
 defineProps<{
   transactions: ITransaction[];
   isFetching: boolean;
+  hasMore?: boolean;
 }>();
 
 defineEmits<{
   (e: 'advance', tx: ITransaction): void;
   (e: 'cancel', tx: ITransaction): void;
   (e: 'rollback', tx: ITransaction): void;
+  (e: 'load-more'): void;
 }>();
 </script>

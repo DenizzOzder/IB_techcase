@@ -1,0 +1,77 @@
+<template>
+  <div class="group relative overflow-hidden rounded-[2rem] bg-white/40 border border-white/50 p-6 shadow-sm backdrop-blur-md transition-all hover:shadow-xl hover:-translate-y-1 dark:bg-gray-800/40 dark:border-gray-700/50">
+    <div class="flex items-start justify-between mb-6">
+      <div class="space-y-1">
+        <h3 class="text-xl font-bold text-text line-clamp-1" :title="item.propertyTitle">{{ item.propertyTitle }}</h3>
+        <p class="text-sm font-semibold text-primary-500">{{ formatCurrency(item.propertyPrice) }}</p>
+      </div>
+      <StatusBadge :status="item.status" />
+    </div>
+
+    <!-- İşlem Detayları -->
+    <div class="grid grid-cols-2 gap-4 mb-6 text-sm">
+      <div class="p-3 rounded-2xl bg-white/50 border border-white/30 dark:bg-gray-900/50 dark:border-gray-700/50">
+        <p class="text-[10px] uppercase font-bold text-gray-400 mb-1">Danışman</p>
+        <p class="font-medium text-text truncate" :title="item.agentName">{{ item.agentName || 'Bilinmiyor' }}</p>
+      </div>
+      <div class="p-3 rounded-2xl bg-white/50 border border-white/30 dark:bg-gray-900/50 dark:border-gray-700/50">
+        <p class="text-[10px] uppercase font-bold text-gray-400 mb-1">Komisyon (%{{ item.commissionRate }})</p>
+        <p v-if="item.status === 'COMPLETED' && item.calculatedCommission" class="font-bold text-success-500">
+          {{ formatCurrency(item.calculatedCommission) }}
+        </p>
+        <p v-else class="font-medium text-gray-500">
+          Tahakkuk Bekliyor
+        </p>
+      </div>
+    </div>
+
+    <!-- Aksiyon Butonları -->
+    <div class="flex flex-wrap gap-2 mt-auto">
+      <BaseButton 
+        v-if="item.status !== 'COMPLETED' && item.status !== 'CANCELLED'"
+        variant="primary" 
+        class="flex-1 min-w-[120px] shadow-lg shadow-primary-500/20"
+        @click="$emit('advance', item)"
+      >
+        İlerlet
+      </BaseButton>
+
+      <BaseButton 
+        v-if="item.status !== 'COMPLETED' && item.status !== 'CANCELLED'"
+        variant="danger" 
+        class="flex-1 min-w-[120px] shadow-lg shadow-danger/20"
+        @click="$emit('cancel', item)"
+      >
+        İptal Et
+      </BaseButton>
+
+      <BaseButton 
+        v-if="item.status !== 'AGREEMENT' && item.status !== 'COMPLETED' && item.status !== 'CANCELLED'"
+        variant="secondary" 
+        class="w-full"
+        @click="$emit('rollback', item)"
+      >
+        Geri Al
+      </BaseButton>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ITransaction } from '@repo/types';
+
+defineProps<{
+  item: ITransaction;
+}>();
+
+defineEmits<{
+  (e: 'advance', item: ITransaction): void;
+  (e: 'cancel', item: ITransaction): void;
+  (e: 'rollback', item: ITransaction): void;
+}>();
+
+const formatCurrency = (val: number) => {
+  if (!val) return '₺0';
+  return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(val);
+};
+</script>

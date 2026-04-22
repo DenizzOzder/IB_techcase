@@ -78,6 +78,22 @@ export function useAgents() {
     }
   };
 
+  const fetchMyStats = async () => {
+    isFetching.value = true;
+    error.value = null;
+    try {
+      const response = await $fetch<IAgentStats>(`${API}/users/me/stats`, {
+        headers: { Authorization: `Bearer ${authStore.accessToken}` }
+      });
+      return response;
+    } catch (e: any) {
+      error.value = e.data?.message || 'İstatistikleriniz yüklenemedi.';
+      return null;
+    } finally {
+      isFetching.value = false;
+    }
+  };
+
   return {
     agents,
     selectedAgent,
@@ -87,5 +103,6 @@ export function useAgents() {
     createAgent,
     deactivateAgent,
     fetchAgentStats,
+    fetchMyStats,
   };
 }

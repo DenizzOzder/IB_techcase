@@ -14,6 +14,8 @@ export const useTransactions = () => {
   const isFetching = ref(false);
   const error = ref<string | null>(null);
   const transactions = ref<ITransaction[]>([]);
+  const hasMore = ref(true);
+  const currentPage = ref(1);
 
   const getHeaders = () => {
     const authStore = useAuthStore();
@@ -24,15 +26,24 @@ export const useTransactions = () => {
   };
 
   // 1. Emlak İşlemlerini Çek — Rol bazlı filtreleme backend'de yapılır
-  const fetchAll = async () => {
+  const fetchAll = async (page: number = 1, limit: number = 20, loadMore: boolean = false) => {
     isFetching.value = true;
     error.value = null;
     try {
       const res = await $fetch<ITransaction[]>(`${API}/transactions`, {
+        query: { page, limit },
         credentials: 'include',
         headers: getHeaders(),
       });
-      transactions.value = res;
+      
+      if (loadMore) {
+        transactions.value = [...transactions.value, ...res];
+      } else {
+        transactions.value = res;
+      }
+      
+      currentPage.value = page;
+      hasMore.value = res.length === limit;
     } catch (e: any) {
       error.value = e.data?.message?.toString() || e.message || 'Sunucuyla bağlantı kurulamadı.';
     } finally {
@@ -130,6 +141,8 @@ export const useTransactions = () => {
     transactions,
     isFetching,
     error,
+    hasMore,
+    currentPage,
     fetchAll,
     createTransaction,
     updateStatus,

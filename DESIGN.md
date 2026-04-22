@@ -222,4 +222,19 @@ Production'da `CORS_ORIGIN` env değişkeninden okunur. `credentials: true` olma
 
 ---
 
-*Bu doküman proje boyunca güncel tutulmaktadır. Son güncelleme: Auth & Oturum Yönetimi Mimarisi (httpOnly Cookie, Rol Bazlı İzolasyon)*
+## 11. Admin Panel ve Arayüz (UI) Mimari Kararları
+
+### 11.1 Neden Sekmeli (Tabs) Yapı?
+Admin panelindeki tüm özellikleri tek bir uzun sayfada göstermek yerine **Sekmeli (Tabs)** bir yapı tercih edilmiştir.
+- **Odaklanma (Focus):** Yöneticinin İlanlar, Danışmanlar ve Loglar arasında geçiş yaparken sadece o bağlama odaklanmasını sağlar.
+- **Performans:** Gereksiz DOM elemanlarının `v-if` ile sayfadan çıkarılması, Vue'nun render performansını artırır. Gerektiğinde `watch` ile sadece aktif sekmeye ait veriler `lazy load` ile çekilebilir.
+- **UX/UI:** Glassmorphism efektleri ve minimalizm kullanılarak, karmaşık veri tabloları sadeleştirilmiştir. Sol panelin tamamen salt-okunur (analitik/grafik) amaçlı bırakılması bilgi hiyerarşisini kolaylaştırmıştır.
+
+### 11.2 Danışman (Agent) Yönetimi ve Soft Delete
+Sistemden danışman silmek (Hard Delete), o danışmanın geçmişteki satış kayıtlarının bozulmasına yol açabilir. 
+- Bu sebeple `UserSchema`'ya `isActive` alanı eklenerek **Soft Delete (Pasife Alma)** mantığı kurulmuştur. 
+- Pasife alınan bir danışman sisteme giremez ancak eski loglarda ve emlak işlemlerinde ismi görünmeye devam eder. Böylece veritabanı bütünlüğü korunur.
+
+---
+
+*Bu doküman proje boyunca güncel tutulmaktadır. Son güncelleme: Admin Panel Tasarımı, Soft Delete ve Audit Log Entegrasyonu.*

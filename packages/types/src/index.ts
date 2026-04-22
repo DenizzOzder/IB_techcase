@@ -30,6 +30,7 @@ export interface ITransaction {
   agentId: string;           // İşlemi açan danışmanın User._id referansı (JWT'den alınır)
   agentName?: string;        // Geriye dönük uyumluluk için optional
   commissionRate: number;    // Yüzdelik Oran (Örn: 2 => %2)
+  calculatedCommission?: number; // EĞER işlem COMPLETED ise hesaplanan komisyon miktarı
   status: TransactionStatus;
   createdAt?: string | Date;
   updatedAt?: string | Date;
