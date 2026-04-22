@@ -15,6 +15,10 @@ export class CommissionsService {
    * COMPLETED statüsüne alınan transaction üzerinden tetiklenir.
    */
   async calculateCommission(transactionData: { _id: any; propertyPrice: number; commissionRate: number }, session: ClientSession) {
+    if (transactionData.propertyPrice <= 0 || transactionData.commissionRate <= 0) {
+      throw new Error('Geçersiz işlem tutarı veya komisyon oranı. Değerler sıfırdan büyük olmalıdır.');
+    }
+
     // Emlak satış/kiralama tutarı ve yüzdelik komisyon oranı üzerinden matematiksel hesap.
     const calculatedAmount = (transactionData.propertyPrice * transactionData.commissionRate) / 100;
 
