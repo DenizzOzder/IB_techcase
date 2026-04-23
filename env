@@ -1,0 +1,8 @@
+# MongoDB Atlas Connection String
+MONGODB_URI=mongodb+srv://candenizozder08_db_user:7jWYd5VBORRS4ZfM@ibcluset.dwabrcv.mongodb.net/real_estate_db?retryWrites=true&w=majority&appName=IBCluset
+# JWT Config
+JWT_SECRET=super_secret_jwt_key
+JWT_REFRESH_SECRET=super_secret_refresh_key
+# Inaktivite durumunda 1 günde otomatik logout
+JWT_EXPIRES_IN=1d
+JWT_REFRESH_EXPIRES_IN=7d
