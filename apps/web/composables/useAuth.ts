@@ -24,12 +24,12 @@ export const useAuth = () => {
    */
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      const res = await $fetch<AuthResponse>(`${API}/auth/login`, {
+      const res = await $fetch<{ data: AuthResponse }>(`${API}/auth/login`, {
         method: 'POST',
         body: { email, password },
         credentials: 'include', // httpOnly cookie alabilmek için şart
       });
-      authStore.setSession(res.accessToken, res.user);
+      authStore.setSession(res.data.accessToken, res.data.user);
       await router.push('/');
       return { success: true };
     } catch (err) {
@@ -63,11 +63,11 @@ export const useAuth = () => {
    */
   const refreshSession = async (): Promise<boolean> => {
     try {
-      const res = await $fetch<AuthResponse>(`${API}/auth/refresh`, {
+      const res = await $fetch<{ data: AuthResponse }>(`${API}/auth/refresh`, {
         method: 'POST',
         credentials: 'include', // httpOnly cookie otomatik gönderilir
       });
-      authStore.setSession(res.accessToken, res.user);
+      authStore.setSession(res.data.accessToken, res.data.user);
       return true;
     } catch {
       authStore.clearSession();

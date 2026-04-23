@@ -1,6 +1,6 @@
 <template>
   <div class="h-64 w-full">
-    <Line v-if="chartData" :data="chartData" :options="chartOptions" />
+    <Bar v-if="chartData" :data="chartData" :options="chartOptions" />
     <div v-else class="h-full w-full flex items-center justify-center text-gray-400 text-xs italic">
       Veri yükleniyor...
     </div>
@@ -14,24 +14,22 @@ import {
   CategoryScale,
   LinearScale,
   PointElement,
-  LineElement,
+  BarElement,
   Title,
   Tooltip,
-  Legend,
-  Filler
+  Legend
 } from 'chart.js';
-import { Line } from 'vue-chartjs';
+import { Bar } from 'vue-chartjs';
 import { IStatsTrendItem } from '@repo/types';
 
 ChartJS.register(
   CategoryScale,
   LinearScale,
   PointElement,
-  LineElement,
+  BarElement,
   Title,
   Tooltip,
-  Legend,
-  Filler
+  Legend
 );
 
 const props = defineProps<{
@@ -47,20 +45,14 @@ const chartData = computed(() => {
       {
         label: 'Satış Hacmi (₺)',
         data: props.trendData.map(d => d.volume),
-        borderColor: '#3b82f6',
-        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-        fill: true,
-        tension: 0.4,
-        pointRadius: 0,
+        backgroundColor: 'rgba(59, 130, 246, 0.8)',
+        borderRadius: 4,
       },
       {
         label: 'Komisyon (₺)',
         data: props.trendData.map(d => d.commission),
-        borderColor: '#8b5cf6',
-        backgroundColor: 'rgba(139, 92, 246, 0.1)',
-        fill: true,
-        tension: 0.4,
-        pointRadius: 0,
+        backgroundColor: 'rgba(139, 92, 246, 0.8)',
+        borderRadius: 4,
       }
     ]
   };
@@ -83,10 +75,28 @@ const chartOptions = {
   },
   scales: {
     x: {
-      display: false,
+      display: true,
+      grid: {
+        display: false
+      },
+      ticks: {
+        font: { size: 10 }
+      }
     },
     y: {
-      display: false,
+      display: true,
+      beginAtZero: true,
+      grid: {
+        color: 'rgba(200, 200, 200, 0.1)'
+      },
+      ticks: {
+        font: { size: 10 },
+        callback: (val: any) => {
+          if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M';
+          if (val >= 1000) return (val / 1000).toFixed(0) + 'K';
+          return val;
+        }
+      }
     }
   }
 };

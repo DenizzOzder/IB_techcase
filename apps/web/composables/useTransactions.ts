@@ -30,20 +30,20 @@ export const useTransactions = () => {
     isFetching.value = true;
     error.value = null;
     try {
-      const res = await $fetch<ITransaction[]>(`${API}/transactions`, {
+      const res = await $fetch<{ data: ITransaction[] }>(`${API}/transactions`, {
         query: { page, limit },
         credentials: 'include',
         headers: getHeaders(),
       });
       
       if (loadMore) {
-        transactions.value = [...transactions.value, ...res];
+        transactions.value = [...transactions.value, ...res.data];
       } else {
-        transactions.value = res;
+        transactions.value = res.data;
       }
       
       currentPage.value = page;
-      hasMore.value = res.length === limit;
+      hasMore.value = res.data.length === limit;
     } catch (err) {
       const e = err as { data?: { message?: string }; message?: string };
       error.value = e.data?.message?.toString() || e.message || 'Sunucuyla bağlantı kurulamadı.';

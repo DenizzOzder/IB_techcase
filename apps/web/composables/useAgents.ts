@@ -15,10 +15,10 @@ export function useAgents() {
     isFetching.value = true;
     error.value = null;
     try {
-      const response = await $fetch<IAgentResponse[]>(`${API}/users/agents`, {
+      const response = await $fetch<{ data: IAgentResponse[] }>(`${API}/users/agents`, {
         headers: { Authorization: `Bearer ${authStore.accessToken}` }
       });
-      agents.value = response;
+      agents.value = response.data;
     } catch (err) {
       const e = err as { data?: { message?: string }; message?: string };
       error.value = e.data?.message || 'Danışmanlar yüklenirken bir hata oluştu.';
@@ -70,10 +70,10 @@ export function useAgents() {
     isFetching.value = true;
     error.value = null;
     try {
-      const response = await $fetch<IAgentDetailResponse>(`${API}/users/agents/${id}/stats`, {
+      const response = await $fetch<{ data: IAgentDetailResponse }>(`${API}/users/agents/${id}/stats`, {
         headers: { Authorization: `Bearer ${authStore.accessToken}` }
       });
-      selectedAgent.value = response;
+      selectedAgent.value = response.data;
     } catch (err) {
       const e = err as { data?: { message?: string }; message?: string };
       error.value = e.data?.message || 'Danışman detayları yüklenemedi.';
@@ -86,10 +86,10 @@ export function useAgents() {
     isFetching.value = true;
     error.value = null;
     try {
-      const response = await $fetch<IAgentStats>(`${API}/users/me/stats`, {
+      const response = await $fetch<{ data: IAgentStats }>(`${API}/users/me/stats`, {
         headers: { Authorization: `Bearer ${authStore.accessToken}` }
       });
-      return response;
+      return response.data;
     } catch (err) {
       const e = err as { data?: { message?: string }; message?: string };
       error.value = e.data?.message || 'İstatistikleriniz yüklenemedi.';

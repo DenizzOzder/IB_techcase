@@ -15,10 +15,10 @@ export function useLogs() {
     error.value = null;
     try {
       const timeQuery = timeRange ? `&timeRange=${timeRange}` : '';
-      const response = await $fetch<IAuditLogsResponse>(`${API}/logs?page=${page}&limit=${limit}${timeQuery}`, {
+      const response = await $fetch<{ data: IAuditLogsResponse }>(`${API}/logs?page=${page}&limit=${limit}${timeQuery}`, {
         headers: { Authorization: `Bearer ${authStore.accessToken}` }
       });
-      logsData.value = response;
+      logsData.value = response.data;
     } catch (err) {
       const e = err as { data?: { message?: string }; message?: string };
       error.value = e.data?.message || 'Loglar yüklenirken bir hata oluştu.';

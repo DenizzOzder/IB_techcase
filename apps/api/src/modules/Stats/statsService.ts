@@ -71,80 +71,80 @@ export class StatsService {
     };
   }
 
-  /** Son 12 aylık trend verisi */
+  /** İçinde bulunulan ayın 4 haftalık trend verisi */
   private async getMonthlyTrend(): Promise<IStatsTrendItem[]> {
     const now = new Date();
-    const start = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
 
     const [txTrend, commTrend] = await Promise.all([
       this.transactionModel.aggregate([
         { $match: { createdAt: { $gte: start } } },
         {
           $group: {
-            _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
+            _id: { week: { $add: [{ $floor: { $divide: [ { $subtract: [{ $dayOfMonth: '$createdAt' }, 1] }, 7 ] } }, 1] } },
             count: { $sum: 1 },
             volume: {
               $sum: { $cond: [{ $eq: ['$status', TransactionStatus.COMPLETED] }, '$propertyPrice', 0] },
             },
           },
         },
-        { $sort: { '_id.year': 1, '_id.month': 1 } },
+        { $sort: { '_id.week': 1 } },
       ]),
       this.commissionModel.aggregate([
         { $match: { createdAt: { $gte: start }, status: { $ne: 'CANCELLED' } } },
         {
           $group: {
-            _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
+            _id: { week: { $add: [{ $floor: { $divide: [ { $subtract: [{ $dayOfMonth: '$createdAt' }, 1] }, 7 ] } }, 1] } },
             commission: { $sum: '$agencyAmount' },
           },
         },
       ]),
     ]);
 
-    // Son 12 ayı oluştur (boş aylar da dahil)
     const result: IStatsTrendItem[] = [];
-    for (let i = 11; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const year = d.getFullYear();
-      const month = d.getMonth() + 1;
-
-      const tx = txTrend.find(r => r._id.year === year && r._id.month === month);
-      const comm = commTrend.find(r => r._id.year === year && r._id.month === month);
+    for (let w = 1; w <= 4; w++) {
+      let vol = 0, count = 0, commission = 0;
+      
+      const matchedTxs = txTrend.filter(r => (w === 4 ? r._id.week >= 4 : r._id.week === w));
+      matchedTxs.forEach(r => { vol += r.volume; count += r.count; });
+      
+      const matchedComms = commTrend.filter(r => (w === 4 ? r._id.week >= 4 : r._id.week === w));
+      matchedComms.forEach(r => { commission += r.commission; });
 
       result.push({
-        label: TR_MONTHS[month - 1],
-        volume: tx?.volume ?? 0,
-        commission: comm?.commission ?? 0,
-        count: tx?.count ?? 0,
+        label: `${w}. Hafta`,
+        volume: vol,
+        commission: commission,
+        count: count,
       });
     }
     return result;
   }
 
-  /** Son 5 yıllık trend verisi */
+  /** İçinde bulunulan yılın aylık trend verisi */
   private async getYearlyTrend(): Promise<IStatsTrendItem[]> {
     const currentYear = new Date().getFullYear();
-    const start = new Date(currentYear - 4, 0, 1);
+    const start = new Date(currentYear, 0, 1);
 
     const [txTrend, commTrend] = await Promise.all([
       this.transactionModel.aggregate([
         { $match: { createdAt: { $gte: start } } },
         {
           $group: {
-            _id: { year: { $year: '$createdAt' } },
+            _id: { month: { $month: '$createdAt' } },
             count: { $sum: 1 },
             volume: {
               $sum: { $cond: [{ $eq: ['$status', TransactionStatus.COMPLETED] }, '$propertyPrice', 0] },
             },
           },
         },
-        { $sort: { '_id.year': 1 } },
+        { $sort: { '_id.month': 1 } },
       ]),
       this.commissionModel.aggregate([
         { $match: { createdAt: { $gte: start }, status: { $ne: 'CANCELLED' } } },
         {
           $group: {
-            _id: { year: { $year: '$createdAt' } },
+            _id: { month: { $month: '$createdAt' } },
             commission: { $sum: '$agencyAmount' },
           },
         },
@@ -152,11 +152,11 @@ export class StatsService {
     ]);
 
     const result: IStatsTrendItem[] = [];
-    for (let y = currentYear - 4; y <= currentYear; y++) {
-      const tx = txTrend.find(r => r._id.year === y);
-      const comm = commTrend.find(r => r._id.year === y);
+    for (let m = 1; m <= 12; m++) {
+      const tx = txTrend.find(r => r._id.month === m);
+      const comm = commTrend.find(r => r._id.month === m);
       result.push({
-        label: String(y),
+        label: TR_MONTHS[m - 1],
         volume: tx?.volume ?? 0,
         commission: comm?.commission ?? 0,
         count: tx?.count ?? 0,

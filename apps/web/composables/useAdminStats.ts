@@ -16,14 +16,14 @@ export const useAdminStats = () => {
     error.value = null;
 
     try {
-      const res = await $fetch<IStatsResponse>(`${API}/admin/stats`, {
+      const res = await $fetch<{ data: IStatsResponse }>(`${API}/admin/stats`, {
         params: { period },
         headers: {
           Authorization: `Bearer ${authStore.accessToken}`,
         },
         credentials: 'include',
       });
-      stats.value = res;
+      stats.value = res.data;
     } catch (err) {
       const e = err as { data?: { message?: string }; message?: string };
       error.value = e.data?.message || 'İstatistikler yüklenemedi.';

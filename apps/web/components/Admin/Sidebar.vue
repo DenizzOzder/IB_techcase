@@ -74,6 +74,12 @@
             </div>
           </div>
 
+          <!-- Status Distribution Chart -->
+          <div v-if="stats" class="mt-6 pt-4 border-t border-white/10 dark:border-gray-800">
+            <span class="text-xs font-bold text-gray-400 uppercase block mb-4">Statü Dağılımı</span>
+            <AdminStatusPieChart :status-data="stats.statusDistribution" />
+          </div>
+
           <!-- Sistem Sağlığı (Tech Case Uyumu) -->
           <div class="mt-6 rounded-2xl bg-green-500/5 border border-green-500/20 p-4">
             <div class="flex items-center gap-2 mb-2">

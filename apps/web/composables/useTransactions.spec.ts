@@ -21,7 +21,7 @@ describe('useTransactions composable', () => {
   });
 
   it('fetchAll should fetch transactions and update state', async () => {
-    mockFetch.mockResolvedValueOnce([{ _id: '1', propertyTitle: 'Test' }]);
+    mockFetch.mockResolvedValueOnce({ data: [{ _id: '1', propertyTitle: 'Test' }] });
 
     const { fetchAll, transactions, isFetching, error } = useTransactions();
     
@@ -44,7 +44,7 @@ describe('useTransactions composable', () => {
 
   it('createTransaction should post payload and call fetchAll', async () => {
     mockFetch.mockResolvedValueOnce(true); // create response
-    mockFetch.mockResolvedValueOnce([]); // fetchAll response
+    mockFetch.mockResolvedValueOnce({ data: [] }); // fetchAll response
     
     const { createTransaction, error } = useTransactions();
     const payload = { propertyTitle: 'New Prop', propertyPrice: 100, commissionRate: 2 };

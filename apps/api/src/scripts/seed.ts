@@ -14,6 +14,15 @@ async function bootstrap() {
   const transactionsService = app.get(TransactionsService);
   const userModel = app.get<Model<UserDocument>>(getModelToken(User.name));
 
+  const transactionModel = app.get<Model<any>>(getModelToken('Transaction'));
+  const commissionModel = app.get<Model<any>>(getModelToken('Commission'));
+  const auditLogModel = app.get<Model<any>>(getModelToken('AuditLog'));
+
+  console.log('Clearing old data...');
+  await transactionModel.deleteMany({});
+  await commissionModel.deleteMany({});
+  await auditLogModel.deleteMany({});
+
   console.log('Starting DB Seeding...');
 
   // Create 3 Admins
@@ -58,14 +67,25 @@ async function bootstrap() {
     const agent = agents[i];
     const txPromises: Promise<void>[] = [];
     
-    for (let j = 1; j <= 200; j++) {
+    for (let j = 1; j <= 50; j++) {
       txPromises.push((async () => {
         try {
           const propertyPrice = Math.floor(Math.random() * 5000000) + 1000000;
+          const isScenario2 = Math.random() < 0.4;
+          let sellingAgentId = undefined;
+          if (isScenario2) {
+            let randomAgent = agents[Math.floor(Math.random() * agents.length)];
+            while (randomAgent._id.toString() === agent._id.toString()) {
+              randomAgent = agents[Math.floor(Math.random() * agents.length)];
+            }
+            sellingAgentId = randomAgent._id.toString();
+          }
+
           const tx = await transactionsService.createTransaction({
             propertyTitle: `Property ${i}-${j}`,
             propertyPrice,
             commissionRate: 2, // 2%
+            sellingAgentId,
           }, agent._id.toString());
 
           // Randomly advance status
@@ -86,6 +106,13 @@ async function bootstrap() {
           if (Math.random() < 0.1 && currentStatus !== TransactionStatus.COMPLETED) {
             await transactionsService.cancelTransaction(tx._id.toString(), jwtPayload);
           }
+
+          // Override dates to be spread over the last 12 months
+          const randomPastMs = Math.floor(Math.random() * 365 * 24 * 60 * 60 * 1000);
+          const date = new Date(Date.now() - randomPastMs);
+          await transactionModel.updateOne({ _id: tx._id }, { $set: { createdAt: date, updatedAt: date } });
+          await commissionModel.updateMany({ transactionId: tx._id }, { $set: { createdAt: date, updatedAt: date } });
+          await auditLogModel.updateMany({ transactionId: tx._id }, { $set: { createdAt: date } });
           
           totalCreated++;
           if (totalCreated % 1000 === 0) {
