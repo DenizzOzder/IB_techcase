@@ -82,7 +82,7 @@ describe('CommissionsService', () => {
 
       await expect(service.calculateCommission(transactionData, mockSession))
         .rejects
-        .toThrow('Geçersiz işlem tutarı veya komisyon oranı. Değerler sıfırdan büyük olmalıdır.');
+        .toThrow('İşlem tutarı veya komisyon oranı sıfır girildiği için hesaplama yapılamadı.');
     });
 
     it('should throw an error if commissionRate is 0 or negative', async () => {
@@ -95,7 +95,7 @@ describe('CommissionsService', () => {
 
       await expect(service.calculateCommission(transactionData, mockSession))
         .rejects
-        .toThrow('Geçersiz işlem tutarı veya komisyon oranı. Değerler sıfırdan büyük olmalıdır.');
+        .toThrow('İşlem tutarı veya komisyon oranı sıfır girildiği için hesaplama yapılamadı.');
     });
   });
 });
