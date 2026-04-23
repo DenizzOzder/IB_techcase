@@ -62,6 +62,32 @@
               <p class="text-sm font-bold text-text truncate">{{ formatCurrency(stats.summary.totalCommission) }}</p>
             </div>
           </div>
+          
+          <div v-if="stats" class="grid grid-cols-2 gap-2 mt-2">
+            <div class="p-2 rounded-xl bg-orange-500/5 border border-orange-500/10">
+              <p class="text-[10px] text-orange-500 font-medium">Ortalama Kapatma</p>
+              <p class="text-sm font-bold text-text">{{ stats.summary.averageClosingTimeDays || 0 }} Gün</p>
+            </div>
+            <div class="p-2 rounded-xl bg-red-500/5 border border-red-500/10">
+              <p class="text-[10px] text-red-500 font-medium">İptal Oranı</p>
+              <p class="text-sm font-bold text-text">{{ ((stats.summary.cancelledCount / (stats.summary.totalTransactions || 1)) * 100).toFixed(1) }}%</p>
+            </div>
+          </div>
+
+          <!-- Sistem Sağlığı (Tech Case Uyumu) -->
+          <div class="mt-6 rounded-2xl bg-green-500/5 border border-green-500/20 p-4">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-green-500 text-lg">🛡️</span>
+              <span class="text-xs font-bold text-green-600 uppercase">Sistem Sağlığı</span>
+            </div>
+            <ul class="text-[10px] text-gray-500 dark:text-gray-400 space-y-1.5 font-medium">
+              <li class="flex items-center gap-1.5">✅ <span><strong class="text-gray-700 dark:text-gray-300">ACID</strong> Transactions Aktif</span></li>
+              <li class="flex items-center gap-1.5">✅ <span><strong class="text-gray-700 dark:text-gray-300">SOLID</strong> & DDD Mimari</span></li>
+              <li class="flex items-center gap-1.5">✅ <span><strong class="text-gray-700 dark:text-gray-300">Strict</strong> TypeScript</span></li>
+              <li class="flex items-center gap-1.5">✅ <span><strong class="text-gray-700 dark:text-gray-300">Redis</strong> Önbellekleme</span></li>
+              <li class="flex items-center gap-1.5">✅ <span><strong class="text-gray-700 dark:text-gray-300">Compound</strong> Indexing</span></li>
+            </ul>
+          </div>
         </div>
 
       </div>

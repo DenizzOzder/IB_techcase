@@ -17,13 +17,15 @@ export class AuditLogsController {
   @CacheTTL(60000)
   async getLogs(
     @Query('page') page: string = '1',
-    @Query('limit') limit: string = '20'
+    @Query('limit') limit: string = '20',
+    @Query('timeRange') timeRange?: string
   ) {
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
     return this.auditLogsService.getLogs(
       isNaN(pageNum) || pageNum < 1 ? 1 : pageNum,
-      isNaN(limitNum) || limitNum < 1 ? 20 : limitNum
+      isNaN(limitNum) || limitNum < 1 ? 20 : limitNum,
+      timeRange
     );
   }
 }

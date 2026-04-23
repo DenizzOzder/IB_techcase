@@ -2,9 +2,17 @@
   <div class="space-y-6">
     <div class="flex items-center justify-between mb-6">
       <h2 class="text-xl font-bold text-text">Sistem İşlem Logları</h2>
-      <button @click="fetchLogs(1)" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-        🔄
-      </button>
+      <div class="flex items-center gap-3">
+        <select v-model="selectedTimeRange" @change="fetchLogs(1, 20, selectedTimeRange)" class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500/20 outline-none dark:bg-gray-800 dark:border-gray-700 dark:text-white">
+          <option value="">Tüm Zamanlar</option>
+          <option value="today">Bugün</option>
+          <option value="week">Bu Hafta</option>
+          <option value="month">Bu Ay</option>
+        </select>
+        <button @click="fetchLogs(1, 20, selectedTimeRange)" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+          🔄
+        </button>
+      </div>
     </div>
 
     <div v-if="isFetching && !logsData" class="flex justify-center py-12">
@@ -50,45 +58,29 @@
         </tbody>
       </table>
 
-      <!-- Pagination -->
-      <div v-if="logsData.totalPages > 1" class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 dark:border-gray-800 dark:bg-surface">
-        <div class="flex flex-1 justify-between sm:hidden">
-          <button @click="fetchLogs(logsData.page - 1)" :disabled="logsData.page === 1" class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Önceki</button>
-          <button @click="fetchLogs(logsData.page + 1)" :disabled="logsData.page === logsData.totalPages" class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Sonraki</button>
-        </div>
-        <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-          <div>
-            <p class="text-sm text-gray-700 dark:text-gray-400">
-              Toplam <span class="font-medium">{{ logsData.total }}</span> kayıttan Sayfa <span class="font-medium">{{ logsData.page }} / {{ logsData.totalPages }}</span>
-            </p>
-          </div>
-          <div>
-            <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
-              <button @click="fetchLogs(logsData.page - 1)" :disabled="logsData.page === 1" class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50">
-                <span class="sr-only">Önceki</span>
-                ◀
-              </button>
-              <button @click="fetchLogs(logsData.page + 1)" :disabled="logsData.page === logsData.totalPages" class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50">
-                <span class="sr-only">Sonraki</span>
-                ▶
-              </button>
-            </nav>
-          </div>
-        </div>
-      </div>
+      <BasePagination 
+        v-if="logsData.totalPages > 1"
+        :current-page="logsData.page"
+        :has-prev="logsData.page > 1"
+        :has-next="logsData.page < logsData.totalPages"
+        @prev="fetchLogs(logsData.page - 1, 20, selectedTimeRange)"
+        @next="fetchLogs(logsData.page + 1, 20, selectedTimeRange)"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useLogs } from '@/composables/useLogs';
 import { AuditLogAction } from '@repo/types';
+import BasePagination from '@/components/Common/BasePagination.vue';
 
 const { logsData, isFetching, fetchLogs } = useLogs();
+const selectedTimeRange = ref('');
 
 onMounted(() => {
-  fetchLogs(1);
+  fetchLogs(1, 20, selectedTimeRange.value);
 });
 
 const formatDate = (isoString: string) => {

@@ -32,13 +32,22 @@ export class StatsService {
 
   /** Genel özet istatistikler (tüm zamanlar) */
   private async getSummary(): Promise<IStatsSummary> {
-    const [statusCounts, commissionTotal] = await Promise.all([
+    const [statusCounts, commissionTotal, avgTimeData] = await Promise.all([
       this.transactionModel.aggregate([
         { $group: { _id: '$status', count: { $sum: 1 }, volume: { $sum: '$propertyPrice' } } },
       ]),
       this.commissionModel.aggregate([
         { $match: { status: { $ne: 'CANCELLED' } } },
         { $group: { _id: null, total: { $sum: '$amount' } } },
+      ]),
+      this.transactionModel.aggregate([
+        { $match: { status: TransactionStatus.COMPLETED } },
+        {
+          $group: {
+            _id: null,
+            avgTimeMs: { $avg: { $subtract: ['$updatedAt', '$createdAt'] } }
+          }
+        }
       ]),
     ]);
 
@@ -58,6 +67,7 @@ export class StatsService {
       completedCount,
       cancelledCount,
       activeCount,
+      averageClosingTimeDays: avgTimeData[0]?.avgTimeMs ? parseFloat((avgTimeData[0].avgTimeMs / (1000 * 60 * 60 * 24)).toFixed(1)) : 0,
     };
   }
 

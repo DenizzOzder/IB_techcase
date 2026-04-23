@@ -10,11 +10,12 @@ export function useLogs() {
   const isFetching = ref(false);
   const error = ref<string | null>(null);
 
-  const fetchLogs = async (page: number = 1, limit: number = 20) => {
+  const fetchLogs = async (page: number = 1, limit: number = 20, timeRange?: string) => {
     isFetching.value = true;
     error.value = null;
     try {
-      const response = await $fetch<IAuditLogsResponse>(`${API}/logs?page=${page}&limit=${limit}`, {
+      const timeQuery = timeRange ? `&timeRange=${timeRange}` : '';
+      const response = await $fetch<IAuditLogsResponse>(`${API}/logs?page=${page}&limit=${limit}${timeQuery}`, {
         headers: { Authorization: `Bearer ${authStore.accessToken}` }
       });
       logsData.value = response;

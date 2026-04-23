@@ -52,12 +52,30 @@ export class AuditLogsService {
   /**
    * Yönetici paneli için logları listeler (Sayfalama ile).
    */
-  async getLogs(page: number = 1, limit: number = 20): Promise<IAuditLogsResponse> {
+  async getLogs(page: number = 1, limit: number = 20, timeRange?: string): Promise<IAuditLogsResponse> {
     const skip = (page - 1) * limit;
+    
+    let matchStage: Record<string, any> = {};
+    if (timeRange) {
+      const now = new Date();
+      let startDate: Date;
+      if (timeRange === 'today') {
+        startDate = new Date(now.setHours(0,0,0,0));
+      } else if (timeRange === 'week') {
+        startDate = new Date();
+        startDate.setDate(now.getDate() - 7);
+      } else if (timeRange === 'month') {
+        startDate = new Date();
+        startDate.setMonth(now.getMonth() - 1);
+      }
+      if (startDate) {
+        matchStage = { createdAt: { $gte: startDate } };
+      }
+    }
 
     const [data, total] = await Promise.all([
-      this.auditLogModel.find().sort({ createdAt: -1 }).skip(skip).limit(limit).exec() as Promise<AuditLogDocument[]>,
-      this.auditLogModel.countDocuments().exec()
+      this.auditLogModel.find(matchStage).sort({ createdAt: -1 }).skip(skip).limit(limit).exec() as Promise<AuditLogDocument[]>,
+      this.auditLogModel.countDocuments(matchStage).exec()
     ]);
 
     return {

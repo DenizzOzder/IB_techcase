@@ -122,6 +122,7 @@ export interface IStatsSummary {
   completedCount: number;
   cancelledCount: number;
   activeCount: number;       // AGREEMENT + EARNEST_MONEY + TITLE_DEED
+  averageClosingTimeDays: number; // Ortalama kapatma süresi (Gün)
 }
 
 export interface IStatsResponse {
