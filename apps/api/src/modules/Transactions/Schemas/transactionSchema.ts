@@ -31,4 +31,5 @@ export class Transaction implements Omit<ITransaction, '_id' | 'agentId' | 'agen
 }
 
 export const TransactionSchema = SchemaFactory.createForClass(Transaction);
+TransactionSchema.index({ agentId: 1, status: 1, createdAt: -1 });
 
