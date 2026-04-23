@@ -10,17 +10,30 @@
 
     <!-- İşlem Detayları -->
     <div class="grid grid-cols-2 gap-4 mb-6 text-sm">
-      <div class="p-3 rounded-2xl bg-white/50 border border-white/30 dark:bg-gray-900/50 dark:border-gray-700/50">
+      <div v-if="authStore.isAdmin" class="p-3 rounded-2xl bg-white/50 border border-white/30 dark:bg-gray-900/50 dark:border-gray-700/50">
         <p class="text-[10px] uppercase font-bold text-gray-400 mb-1">Danışman</p>
         <p class="font-medium text-text truncate" :title="item.agentName">{{ item.agentName || 'Bilinmiyor' }}</p>
       </div>
-      <div class="p-3 rounded-2xl bg-white/50 border border-white/30 dark:bg-gray-900/50 dark:border-gray-700/50">
-        <p class="text-[10px] uppercase font-bold text-gray-400 mb-1">Komisyon (%{{ item.commissionRate }})</p>
-        <p v-if="item.status === 'COMPLETED' && item.calculatedCommission" class="font-bold text-success-500">
+      
+      <div class="p-3 rounded-2xl border transition-all duration-300 flex flex-col justify-center"
+           :class="[
+             item.status === 'COMPLETED' 
+               ? 'bg-success-500/10 border-success-500/30 shadow-inner shadow-success-500/10 col-span-2 items-center text-center py-4' 
+               : 'bg-white/50 border-white/30 dark:bg-gray-900/50 dark:border-gray-700/50',
+             !authStore.isAdmin && item.status !== 'COMPLETED' ? 'col-span-2' : ''
+           ]">
+        <p class="text-[10px] uppercase font-bold mb-1 flex items-center gap-1"
+           :class="item.status === 'COMPLETED' ? 'text-success-600 dark:text-success-400' : 'text-gray-400'">
+          {{ item.status === 'COMPLETED' ? '💰 KAZANILAN KOMİSYON' : 'Beklenen Komisyon' }} (%{{ item.commissionRate }})
+        </p>
+        <p v-if="item.status === 'COMPLETED' && item.calculatedCommission" class="text-2xl font-black text-success-600 dark:text-success-400">
           {{ formatCurrency(item.calculatedCommission) }}
         </p>
-        <p v-else class="font-medium text-gray-500">
-          Tahakkuk Bekliyor
+        <p v-else-if="item.status === 'COMPLETED'" class="font-bold text-success-500">
+          Hesaplanıyor...
+        </p>
+        <p v-else class="font-medium text-gray-500 flex items-center gap-2">
+          <span class="text-lg font-bold text-text">{{ formatCurrency(item.propertyPrice * (item.commissionRate / 100)) }}</span>
         </p>
       </div>
     </div>
@@ -59,6 +72,9 @@
 
 <script setup lang="ts">
 import { ITransaction } from '@repo/types';
+import { useAuthStore } from '@/stores/authStore';
+
+const authStore = useAuthStore();
 
 defineProps<{
   item: ITransaction;
