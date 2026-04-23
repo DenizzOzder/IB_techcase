@@ -35,9 +35,10 @@ describe('CommissionsService', () => {
   describe('calculateCommission', () => {
     const mockSession = {} as any;
 
-    it('should correctly calculate commission and save it', async () => {
+    it('Scenario 1: should correctly calculate commission when listing and selling agents are the same', async () => {
       const transactionData = {
         _id: new Types.ObjectId().toString(),
+        agentId: new Types.ObjectId().toString(),
         propertyPrice: 1000000,
         commissionRate: 2, // %2
       };
@@ -46,13 +47,35 @@ describe('CommissionsService', () => {
 
       expect(result.transactionId).toBe(transactionData._id);
       expect(result.amount).toBe(20000); // 1,000,000 * 2 / 100 = 20,000
+      expect(result.agencyAmount).toBe(10000); // 50%
+      expect(result.listingAgentAmount).toBe(10000); // 50%
+      expect(result.sellingAgentAmount).toBeUndefined();
       expect(result.status).toBe(CommissionStatus.UNPAID);
       expect(result.save).toHaveBeenCalledWith({ session: mockSession });
+    });
+
+    it('Scenario 2: should correctly split commission when listing and selling agents are different', async () => {
+      const transactionData = {
+        _id: new Types.ObjectId().toString(),
+        agentId: new Types.ObjectId().toString(),
+        sellingAgentId: new Types.ObjectId().toString(),
+        propertyPrice: 1000000,
+        commissionRate: 2,
+      };
+
+      const result = await service.calculateCommission(transactionData, mockSession);
+
+      expect(result.amount).toBe(20000);
+      expect(result.agencyAmount).toBe(10000); // 50%
+      expect(result.listingAgentAmount).toBe(5000); // 25%
+      expect(result.sellingAgentAmount).toBe(5000); // 25%
+      expect(result.status).toBe(CommissionStatus.UNPAID);
     });
 
     it('should throw an error if propertyPrice is 0 or negative', async () => {
       const transactionData = {
         _id: new Types.ObjectId().toString(),
+        agentId: new Types.ObjectId().toString(),
         propertyPrice: 0,
         commissionRate: 2,
       };
@@ -65,6 +88,7 @@ describe('CommissionsService', () => {
     it('should throw an error if commissionRate is 0 or negative', async () => {
       const transactionData = {
         _id: new Types.ObjectId().toString(),
+        agentId: new Types.ObjectId().toString(),
         propertyPrice: 1000000,
         commissionRate: -1,
       };

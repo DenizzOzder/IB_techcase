@@ -27,10 +27,11 @@ export interface ITransaction {
   _id?: string;
   propertyTitle: string;     // İlan / Gayrimenkul Adı
   propertyPrice: number;     // Mülkün veya sözleşmenin toplam tutarı
-  agentId: string;           // İşlemi açan danışmanın User._id referansı (JWT'den alınır)
+  agentId: string;           // İşlemi açan danışmanın User._id referansı (JWT'den alınır) - LISTING AGENT
+  sellingAgentId?: string;   // İşlemi kapatan danışman (Eğer farklıysa, paylar 25/25 bölünür)
   agentName?: string;        // Geriye dönük uyumluluk için optional
   commissionRate: number;    // Yüzdelik Oran (Örn: 2 => %2)
-  calculatedCommission?: number; // EĞER işlem COMPLETED ise hesaplanan komisyon miktarı
+  calculatedCommission?: number; // EĞER işlem COMPLETED ise hesaplanan toplam komisyon miktarı
   status: TransactionStatus;
   createdAt?: string | Date;
   updatedAt?: string | Date;
@@ -39,7 +40,10 @@ export interface ITransaction {
 export interface ICommission {
   _id?: string;
   transactionId: string; // MongoDB ObjectId Referansı bağlanacak
-  amount: number; // Hesaplanmış komisyon (propertyPrice * commissionRate / 100)
+  amount: number; // Hesaplanmış toplam komisyon (propertyPrice * commissionRate / 100)
+  agencyAmount: number; // %50 Şirket Payı
+  listingAgentAmount: number; // %50 veya %25 Listeleyen Danışman Payı
+  sellingAgentAmount?: number; // %25 Satan Danışman Payı (Varsa)
   status: CommissionStatus;
   createdAt?: string | Date;
   updatedAt?: string | Date;
@@ -50,6 +54,7 @@ export interface ICreateTransactionRequest {
   propertyTitle: string;
   propertyPrice: number;
   // agentId: backend JWT token'dan otomatik alınır, client göndermez
+  sellingAgentId?: string; // İsteğe bağlı satan danışman
   commissionRate: number;
 }
 

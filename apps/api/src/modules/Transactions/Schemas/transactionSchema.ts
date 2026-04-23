@@ -5,7 +5,7 @@ import { ITransaction, TransactionStatus } from '@repo/types';
 export type TransactionDocument = Transaction & Document;
 
 @Schema({ timestamps: true })
-export class Transaction implements Omit<ITransaction, '_id' | 'agentId' | 'agentName' | 'createdAt' | 'updatedAt'> {
+export class Transaction implements Omit<ITransaction, '_id' | 'agentId' | 'sellingAgentId' | 'agentName' | 'createdAt' | 'updatedAt'> {
   @Prop({ required: true })
   propertyTitle: string;
 
@@ -18,6 +18,10 @@ export class Transaction implements Omit<ITransaction, '_id' | 'agentId' | 'agen
    */
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   agentId: Types.ObjectId;
+
+  /** İsteğe bağlı olarak atanan selling agent */
+  @Prop({ type: Types.ObjectId, ref: 'User', required: false })
+  sellingAgentId?: Types.ObjectId;
 
   /** Geriye dönük uyumluluk için optional bırakıldı */
   @Prop({ required: false })

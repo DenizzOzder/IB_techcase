@@ -100,30 +100,56 @@ export class UsersService implements OnModuleInit {
 
     const objId = new Types.ObjectId(agentId);
 
-    const [txStats, commStats] = await Promise.all([
+    const [txStats] = await Promise.all([
       this.transactionModel.aggregate([
-        { $match: { agentId: objId, status: { $ne: 'CANCELLED' } } },
+        { $match: { 
+            $or: [{ agentId: objId }, { sellingAgentId: objId }],
+            status: { $ne: 'CANCELLED' } 
+          } 
+        },
+        { 
+          $lookup: {
+            from: 'commissions',
+            localField: '_id',
+            foreignField: 'transactionId',
+            as: 'commission'
+          }
+        },
+        {
+          $unwind: { path: '$commission', preserveNullAndEmptyArrays: true }
+        },
         { 
           $group: { 
             _id: '$status', 
             count: { $sum: 1 }, 
-            volume: { $sum: '$propertyPrice' } 
+            volume: { $sum: '$propertyPrice' },
+            totalCommission: {
+              $sum: {
+                $cond: [
+                  { $eq: ['$status', TransactionStatus.COMPLETED] },
+                  {
+                    $add: [
+                      { $cond: [{ $eq: ['$agentId', objId] }, { $ifNull: ['$commission.listingAgentAmount', 0] }, 0] },
+                      { $cond: [{ $eq: ['$sellingAgentId', objId] }, { $ifNull: ['$commission.sellingAgentAmount', 0] }, 0] }
+                    ]
+                  },
+                  0
+                ]
+              }
+            }
           } 
         }
-      ]),
-      this.commissionModel.aggregate([
-        { $match: { agentId: objId, status: { $ne: 'CANCELLED' } } },
-        { $group: { _id: null, total: { $sum: '$amount' } } }
       ])
     ]);
 
-    let totalTransactions = 0, completedTransactions = 0, totalVolume = 0;
+    let totalTransactions = 0, completedTransactions = 0, totalVolume = 0, totalCommission = 0;
     
     for (const row of txStats) {
       totalTransactions += row.count;
       if (row._id === TransactionStatus.COMPLETED) {
         completedTransactions = row.count;
         totalVolume = row.volume;
+        totalCommission = row.totalCommission;
       }
     }
 
@@ -138,7 +164,7 @@ export class UsersService implements OnModuleInit {
         totalTransactions,
         completedTransactions,
         totalVolume,
-        totalCommission: commStats[0]?.total ?? 0,
+        totalCommission,
       }
     };
   }

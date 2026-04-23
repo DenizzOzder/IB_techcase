@@ -12,6 +12,15 @@ export class Commission implements Omit<ICommission, '_id' | 'transactionId' | '
   @Prop({ required: true })
   amount: number;
 
+  @Prop({ required: true })
+  agencyAmount: number;
+
+  @Prop({ required: true })
+  listingAgentAmount: number;
+
+  @Prop({ required: false })
+  sellingAgentAmount?: number;
+
   @Prop({ type: String, enum: CommissionStatus, default: CommissionStatus.UNPAID })
   status: CommissionStatus;
 }

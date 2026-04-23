@@ -38,7 +38,7 @@ export class StatsService {
       ]),
       this.commissionModel.aggregate([
         { $match: { status: { $ne: 'CANCELLED' } } },
-        { $group: { _id: null, total: { $sum: '$amount' } } },
+        { $group: { _id: null, total: { $sum: '$agencyAmount' } } },
       ]),
       this.transactionModel.aggregate([
         { $match: { status: TransactionStatus.COMPLETED } },
@@ -95,7 +95,7 @@ export class StatsService {
         {
           $group: {
             _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
-            commission: { $sum: '$amount' },
+            commission: { $sum: '$agencyAmount' },
           },
         },
       ]),
@@ -145,7 +145,7 @@ export class StatsService {
         {
           $group: {
             _id: { year: { $year: '$createdAt' } },
-            commission: { $sum: '$amount' },
+            commission: { $sum: '$agencyAmount' },
           },
         },
       ]),
