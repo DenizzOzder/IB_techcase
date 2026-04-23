@@ -39,6 +39,14 @@ export class TransactionsService {
         }
       },
       {
+        $lookup: {
+          from: 'users',
+          localField: 'agentId',
+          foreignField: '_id',
+          as: 'agentData'
+        }
+      },
+      {
         $addFields: {
           calculatedCommission: {
             $cond: {
@@ -46,12 +54,20 @@ export class TransactionsService {
               then: { $arrayElemAt: ['$commissionData.amount', 0] },
               else: null
             }
+          },
+          agentName: {
+            $cond: {
+              if: { $gt: [{ $size: '$agentData' }, 0] },
+              then: { $arrayElemAt: ['$agentData.name', 0] },
+              else: null
+            }
           }
         }
       },
       {
         $project: {
-          commissionData: 0
+          commissionData: 0,
+          agentData: 0
         }
       }
     ];

@@ -116,7 +116,9 @@ export class UsersService implements OnModuleInit {
           }
         },
         {
-          $unwind: { path: '$commission', preserveNullAndEmptyArrays: true }
+          $addFields: {
+            commissionDoc: { $arrayElemAt: ['$commission', 0] }
+          }
         },
         { 
           $group: { 
@@ -129,8 +131,8 @@ export class UsersService implements OnModuleInit {
                   { $eq: ['$status', TransactionStatus.COMPLETED] },
                   {
                     $add: [
-                      { $cond: [{ $eq: ['$agentId', objId] }, { $ifNull: ['$commission.listingAgentAmount', 0] }, 0] },
-                      { $cond: [{ $eq: ['$sellingAgentId', objId] }, { $ifNull: ['$commission.sellingAgentAmount', 0] }, 0] }
+                      { $cond: [{ $eq: ['$agentId', objId] }, { $ifNull: ['$commissionDoc.listingAgentAmount', 0] }, 0] },
+                      { $cond: [{ $eq: ['$sellingAgentId', objId] }, { $ifNull: ['$commissionDoc.sellingAgentAmount', 0] }, 0] }
                     ]
                   },
                   0
