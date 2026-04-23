@@ -23,8 +23,8 @@
       Henüz hiçbir işlem logu bulunmuyor.
     </div>
 
-    <div v-else class="overflow-hidden rounded-2xl border border-gray-200 bg-surface dark:border-gray-800">
-      <table class="w-full text-left text-sm text-gray-500 dark:text-gray-400">
+    <div v-else class="overflow-x-auto rounded-2xl border border-gray-200 bg-surface dark:border-gray-800">
+      <table class="w-full text-left text-sm text-gray-500 dark:text-gray-400 min-w-[600px]">
         <thead class="bg-gray-50 text-xs uppercase text-gray-700 dark:bg-gray-800/50 dark:text-gray-400">
           <tr>
             <th scope="col" class="px-6 py-4 font-bold">Zaman</th>

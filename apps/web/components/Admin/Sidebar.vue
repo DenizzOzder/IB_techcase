@@ -1,16 +1,32 @@
-<template>
-  <aside
-    class="fixed inset-y-0 left-0 z-50 flex flex-col transition-all duration-500 ease-in-out bg-surface/80 backdrop-blur-2xl border-r border-white/20 shadow-2xl dark:bg-gray-900/80 dark:border-gray-800"
-    :class="[isOpen ? 'w-80' : 'w-20']"
-  >
-    <!-- Toggle Button -->
-    <button
-      @click="isOpen = !isOpen"
-      class="absolute -right-4 top-10 flex h-8 w-8 items-center justify-center rounded-full border border-white/30 bg-primary-500 text-white shadow-lg transition-transform hover:scale-110 active:scale-95"
-      :class="[!isOpen ? 'rotate-180' : '']"
+  <template>
+  <div>
+    <!-- Mobile Overlay -->
+    <div 
+      v-if="isOpen" 
+      class="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
+      @click="isOpen = false"
+    ></div>
+
+    <aside
+      class="fixed inset-y-0 left-0 z-50 flex flex-col transition-all duration-500 ease-in-out bg-surface/80 backdrop-blur-2xl border-r border-white/20 shadow-2xl dark:bg-gray-900/80 dark:border-gray-800"
+      :class="[isOpen ? 'w-[280px] md:w-80 translate-x-0' : '-translate-x-full md:translate-x-0 md:w-20']"
     >
-      <span class="text-xs">◀</span>
-    </button>
+      <!-- Toggle Button -->
+      <button
+        @click="isOpen = !isOpen"
+        class="absolute -right-4 top-10 flex h-8 w-8 items-center justify-center rounded-full border border-white/30 bg-primary-500 text-white shadow-lg transition-transform hover:scale-110 active:scale-95 md:flex hidden"
+        :class="[!isOpen ? 'rotate-180' : '']"
+      >
+        <span class="text-xs">◀</span>
+      </button>
+
+      <!-- Mobile Close Button -->
+      <button 
+        @click="isOpen = false"
+        class="absolute right-4 top-4 text-gray-500 md:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full"
+      >
+        ✕
+      </button>
 
     <!-- Logo Section -->
     <div class="flex items-center gap-4 px-6 py-10 overflow-hidden">
@@ -117,6 +133,7 @@
       </div>
     </div>
   </aside>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -127,10 +144,21 @@ import { useAdminStats } from '@/composables/useAdminStats';
 const authStore = useAuthStore();
 const { stats, fetchStats } = useAdminStats();
 
-const isOpen = ref(true);
+const isOpen = ref(false); // Mobile varsayılan kapalı olsun
 const currentPeriod = ref<'monthly' | 'yearly'>('monthly');
 
+const toggle = () => {
+  isOpen.value = !isOpen.value;
+};
+
+defineExpose({
+  toggle
+});
+
 onMounted(() => {
+  if (window.innerWidth >= 768) {
+    isOpen.value = true;
+  }
   if (authStore.isAdmin) {
     fetchStats(currentPeriod.value);
   }

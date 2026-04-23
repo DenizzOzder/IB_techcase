@@ -2,11 +2,11 @@
   <main class="min-h-screen flex bg-background overflow-hidden relative">
     
     <!-- ADMIN SIDEBAR (Yalnızca Admin ise) -->
-    <AdminSidebar v-if="authStore.isAdmin" />
+    <AdminSidebar v-if="authStore.isAdmin" ref="sidebarRef" />
 
     <!-- ANA İÇERİK ALANI -->
     <div 
-      class="flex-1 relative overflow-y-auto pt-12 pb-24 px-6 md:px-12 transition-all duration-500 ease-in-out"
+      class="flex-1 relative overflow-y-auto pt-12 pb-24 px-4 sm:px-6 md:px-12 transition-all duration-500 ease-in-out"
       :class="[authStore.isAdmin ? 'ml-0 md:ml-80' : '']"
     >
       <!-- Dekoratif Arka Plan -->
@@ -28,51 +28,64 @@
         </Transition>
 
         <!-- Başlık ve Kontroller -->
-        <header class="mb-10 flex flex-col md:flex-row items-start justify-between gap-6">
-          <div>
-            <h1 class="text-4xl font-extrabold tracking-tight bg-gradient-to-br from-text to-gray-500 bg-clip-text text-transparent dark:to-gray-400">
-              {{ authStore.isAdmin ? 'Yönetici Dashboard' : 'Danışman Paneli' }}
-            </h1>
-            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400 max-w-lg">
-              {{ authStore.isAdmin 
-                ? 'Şirket genelindeki tüm operasyonları ve performans istatistiklerini buradan takip edin.' 
-                : 'Aktif emlak işlemlerinizi, komisyon süreçlerini ve tapu aşamalarını yönetin.' 
-              }}
-            </p>
+        <header class="mb-10 flex flex-col lg:flex-row items-start justify-between gap-6">
+          <div class="w-full lg:w-auto">
+            <div class="flex items-center gap-3">
+              <button 
+                v-if="authStore.isAdmin" 
+                class="md:hidden p-2 rounded-lg bg-surface/40 border border-white/20 text-text flex-shrink-0"
+                @click="sidebarRef?.toggle()"
+              >
+                ☰
+              </button>
+              <div>
+                <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight bg-gradient-to-br from-text to-gray-500 bg-clip-text text-transparent dark:to-gray-400">
+                  {{ authStore.isAdmin ? 'Yönetici Dashboard' : 'Danışman Paneli' }}
+                </h1>
+                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400 max-w-lg hidden sm:block">
+                  {{ authStore.isAdmin 
+                    ? 'Şirket genelindeki tüm operasyonları ve performans istatistiklerini buradan takip edin.' 
+                    : 'Aktif emlak işlemlerinizi, komisyon süreçlerini ve tapu aşamalarını yönetin.' 
+                  }}
+                </p>
+              </div>
+            </div>
             <div v-if="!authStore.isAdmin" class="mt-6">
-              <BaseButton variant="primary" @click="isFormOpen = !isFormOpen" class="shadow-lg shadow-primary-500/20">
+              <BaseButton variant="primary" @click="isFormOpen = !isFormOpen" class="w-full sm:w-auto shadow-lg shadow-primary-500/20">
                 {{ isFormOpen ? '✕ Formu Kapat' : '+ Yeni İşlem Kaydı' }}
               </BaseButton>
             </div>
           </div>
           
           <!-- AGENT KİŞİSEL İSTATİSTİKLERİ (Mini Kartlar) -->
-          <div v-if="!authStore.isAdmin && myStats" class="flex items-center gap-4 mt-6 md:mt-0">
-            <div class="px-5 py-3 rounded-2xl bg-white/40 border border-white/50 backdrop-blur-sm dark:bg-gray-800/40 dark:border-gray-700/50 shadow-sm flex flex-col items-end">
-              <span class="text-[10px] uppercase font-bold text-gray-400">Toplam Kazanç</span>
-              <span class="text-lg font-extrabold text-primary-500">{{ formatCurrency(myStats.totalCommission) }}</span>
+          <div v-if="!authStore.isAdmin && myStats" class="grid grid-cols-2 gap-3 w-full lg:w-auto lg:flex lg:items-center mt-6 lg:mt-0">
+            <div class="px-4 sm:px-5 py-3 rounded-2xl bg-white/40 border border-white/50 backdrop-blur-sm dark:bg-gray-800/40 dark:border-gray-700/50 shadow-sm flex flex-col items-end min-w-0">
+              <span class="text-[9px] sm:text-[10px] uppercase font-bold text-gray-400 truncate w-full text-right">Toplam Kazanç</span>
+              <span class="text-base sm:text-lg font-extrabold text-primary-500 truncate w-full text-right">{{ formatCurrency(myStats.totalCommission) }}</span>
             </div>
-            <div class="px-5 py-3 rounded-2xl bg-white/40 border border-white/50 backdrop-blur-sm dark:bg-gray-800/40 dark:border-gray-700/50 shadow-sm flex flex-col items-end">
-              <span class="text-[10px] uppercase font-bold text-gray-400">Tamamlanan İşlem</span>
-              <span class="text-lg font-extrabold text-purple-500">{{ myStats.completedTransactions }} / {{ myStats.totalTransactions }}</span>
+            <div class="px-4 sm:px-5 py-3 rounded-2xl bg-white/40 border border-white/50 backdrop-blur-sm dark:bg-gray-800/40 dark:border-gray-700/50 shadow-sm flex flex-col items-end min-w-0">
+              <span class="text-[9px] sm:text-[10px] uppercase font-bold text-gray-400 truncate w-full text-right">Tamamlanan İşlem</span>
+              <span class="text-base sm:text-lg font-extrabold text-purple-500 truncate w-full text-right">{{ myStats.completedTransactions }} / {{ myStats.totalTransactions }}</span>
             </div>
           </div>
           
           <!-- Sağ Üst: Tema & Çıkış -->
-          <div class="flex items-center gap-3">
-            <div class="flex items-center gap-2 rounded-full px-4 py-2 bg-surface/40 border border-white/20 backdrop-blur-md shadow-sm">
-              <span class="text-sm font-semibold text-text">{{ authStore.displayName }}</span>
-              <span class="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider" 
+          <div class="flex items-center justify-between w-full lg:w-auto lg:justify-end gap-3 mt-2 lg:mt-0">
+            <div class="flex items-center gap-2 rounded-full px-4 py-2 bg-surface/40 border border-white/20 backdrop-blur-md shadow-sm overflow-hidden">
+              <span class="text-sm font-semibold text-text truncate max-w-[120px] sm:max-w-[200px]">{{ authStore.displayName }}</span>
+              <span class="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider flex-shrink-0" 
                     :class="authStore.isAdmin ? 'bg-purple-500/20 text-purple-600' : 'bg-blue-500/20 text-blue-600'">
                 {{ authStore.isAdmin ? 'Admin' : 'Agent' }}
               </span>
             </div>
-            <button @click="toggleTheme" class="rounded-full p-2.5 bg-surface/40 border border-white/20 text-text hover:scale-105 transition-transform">
-              {{ $colorMode.value === 'dark' ? '☀️' : '🌙' }}
-            </button>
-            <button @click="handleLogout" class="rounded-full p-2.5 bg-surface/40 border border-white/20 text-danger hover:bg-red-50 dark:hover:bg-red-950/30 transition-all">
-              🚪
-            </button>
+            <div class="flex items-center gap-2">
+              <button @click="toggleTheme" class="rounded-full p-2.5 bg-surface/40 border border-white/20 text-text hover:scale-105 transition-transform flex-shrink-0">
+                {{ $colorMode.value === 'dark' ? '☀️' : '🌙' }}
+              </button>
+              <button @click="handleLogout" class="rounded-full p-2.5 bg-surface/40 border border-white/20 text-danger hover:bg-red-50 dark:hover:bg-red-950/30 transition-all flex-shrink-0">
+                🚪
+              </button>
+            </div>
           </div>
         </header>
 
@@ -103,7 +116,7 @@
         </Transition>
 
         <!-- ADMIN TAB NAVİGASYON -->
-        <div v-if="authStore.isAdmin" class="flex gap-2 mb-8 border-b border-gray-200 dark:border-gray-800 pb-px">
+        <div v-if="authStore.isAdmin" class="flex gap-2 mb-8 border-b border-gray-200 dark:border-gray-800 pb-px overflow-x-auto whitespace-nowrap">
           <button 
             @click="activeTab = 'transactions'"
             class="px-4 py-2 font-semibold text-sm transition-all border-b-2"
@@ -128,17 +141,17 @@
         </div>
 
         <!-- AGENT TAB NAVİGASYON -->
-        <div v-if="!authStore.isAdmin" class="flex gap-2 mb-8 border-b border-gray-200 dark:border-gray-800 pb-px">
+        <div v-if="!authStore.isAdmin" class="flex gap-2 mb-8 border-b border-gray-200 dark:border-gray-800 pb-px overflow-x-auto whitespace-nowrap scrollbar-hide">
           <button 
             @click="agentTab = 'my'"
-            class="px-4 py-2 font-semibold text-sm transition-all border-b-2"
+            class="px-4 py-2 font-semibold text-sm transition-all border-b-2 flex-shrink-0"
             :class="agentTab === 'my' ? 'border-primary-500 text-primary-500' : 'border-transparent text-gray-500 hover:text-text'"
           >
             🏡 İlanlarım
           </button>
           <button 
             @click="agentTab = 'company'"
-            class="px-4 py-2 font-semibold text-sm transition-all border-b-2"
+            class="px-4 py-2 font-semibold text-sm transition-all border-b-2 flex-shrink-0"
             :class="agentTab === 'company' ? 'border-primary-500 text-primary-500' : 'border-transparent text-gray-500 hover:text-text'"
           >
             🏢 İlan Havuzu
@@ -228,6 +241,7 @@ import { TransactionStatus, ITransaction } from '@repo/types';
 definePageMeta({ middleware: 'auth' });
 
 const authStore = useAuthStore();
+const sidebarRef = ref<any>(null);
 const { logout } = useAuth();
 const colorMode = useColorMode();
 
@@ -259,8 +273,8 @@ const {
   fetchMyStats
 } = useAgents();
 
-import type { IStatsResponse } from '@repo/types';
-const myStats = ref<IStatsResponse | null>(null);
+import type { IStatsResponse, IAgentStats } from '@repo/types';
+const myStats = ref<IAgentStats | null>(null);
 
 // Tab state
 const activeTab = ref<'transactions' | 'agents' | 'logs'>('transactions');

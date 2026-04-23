@@ -86,10 +86,10 @@ export function useAgents() {
     isFetching.value = true;
     error.value = null;
     try {
-      const response = await $fetch<{ data: IAgentStats }>(`${API}/users/me/stats`, {
+      const response = await $fetch<{ data: IAgentDetailResponse }>(`${API}/users/me/stats`, {
         headers: { Authorization: `Bearer ${authStore.accessToken}` }
       });
-      return response.data;
+      return response.data.stats;
     } catch (err) {
       const e = err as { data?: { message?: string }; message?: string };
       error.value = e.data?.message || 'İstatistikleriniz yüklenemedi.';

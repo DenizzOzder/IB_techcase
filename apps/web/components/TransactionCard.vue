@@ -22,9 +22,10 @@
                : 'bg-white/50 border-white/30 dark:bg-gray-900/50 dark:border-gray-700/50',
              !authStore.isAdmin && item.status !== 'COMPLETED' ? 'col-span-2' : ''
            ]">
-        <p class="text-[10px] uppercase font-bold mb-1 flex items-center gap-1"
+        <p class="text-[10px] uppercase font-bold mb-1 flex flex-wrap items-center gap-1"
            :class="item.status === 'COMPLETED' ? 'text-success-600 dark:text-success-400' : 'text-gray-400'">
-          {{ item.status === 'COMPLETED' ? '💰 KAZANILAN KOMİSYON' : 'Beklenen Komisyon' }} (%{{ item.commissionRate }})
+          <span>{{ item.status === 'COMPLETED' ? '💰 KAZANILAN KOMİSYON' : 'Beklenen Komisyon' }}</span> 
+          <span>(%{{ item.commissionRate }})</span>
         </p>
         <p v-if="item.status === 'COMPLETED' && item.calculatedCommission" class="text-2xl font-black text-success-600 dark:text-success-400">
           {{ formatCurrency(item.calculatedCommission) }}
