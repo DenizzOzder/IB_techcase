@@ -1,4 +1,10 @@
-import { Controller, Get, Query, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Query,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { StatsService } from '@/modules/Stats/statsService';
 import { JwtAuthGuard } from '@/Common/Guards/jwtAuthGuard';
@@ -17,6 +23,8 @@ export class StatsController {
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(300000)
   async getStats(@Query('period') period: 'monthly' | 'yearly' = 'monthly') {
-    return this.statsService.getStats(period === 'yearly' ? 'yearly' : 'monthly');
+    return this.statsService.getStats(
+      period === 'yearly' ? 'yearly' : 'monthly',
+    );
   }
 }

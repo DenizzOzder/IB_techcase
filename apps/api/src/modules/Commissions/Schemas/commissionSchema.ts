@@ -5,7 +5,10 @@ import { ICommission, CommissionStatus } from '@repo/types';
 export type CommissionDocument = Commission & Document;
 
 @Schema({ timestamps: true })
-export class Commission implements Omit<ICommission, '_id' | 'transactionId' | 'createdAt' | 'updatedAt'> {
+export class Commission implements Omit<
+  ICommission,
+  '_id' | 'transactionId' | 'createdAt' | 'updatedAt'
+> {
   @Prop({ type: Types.ObjectId, ref: 'Transaction', required: true })
   transactionId: Types.ObjectId;
 
@@ -21,7 +24,11 @@ export class Commission implements Omit<ICommission, '_id' | 'transactionId' | '
   @Prop({ required: false })
   sellingAgentAmount?: number;
 
-  @Prop({ type: String, enum: CommissionStatus, default: CommissionStatus.UNPAID })
+  @Prop({
+    type: String,
+    enum: CommissionStatus,
+    default: CommissionStatus.UNPAID,
+  })
   status: CommissionStatus;
 }
 

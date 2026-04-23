@@ -1,9 +1,18 @@
+/* eslint-disable @typescript-eslint/restrict-template-expressions */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types, ClientSession } from 'mongoose';
-import { AuditLog, AuditLogDocument } from '@/modules/AuditLogs/Schemas/auditLogSchema';
+import {
+  AuditLog,
+  AuditLogDocument,
+} from '@/modules/AuditLogs/Schemas/auditLogSchema';
 import { User, UserDocument } from '@/modules/Users/userSchema';
-import { AuditLogAction, TransactionStatus, IAuditLogsResponse } from '@repo/types';
+import {
+  AuditLogAction,
+  TransactionStatus,
+  IAuditLogsResponse,
+} from '@repo/types';
 
 @Injectable()
 export class AuditLogsService {
@@ -11,7 +20,7 @@ export class AuditLogsService {
 
   constructor(
     @InjectModel(AuditLog.name) private auditLogModel: Model<AuditLogDocument>,
-    @InjectModel(User.name) private userModel: Model<UserDocument>
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
   ) {}
 
   /**
@@ -44,7 +53,10 @@ export class AuditLogsService {
 
       await logEntry.save({ session });
     } catch (error) {
-      this.logger.error(`Failed to create audit log for transaction ${transactionId}`, error);
+      this.logger.error(
+        `Failed to create audit log for transaction ${transactionId}`,
+        error,
+      );
       // Fırlatmıyoruz, ana transaction'ı patlatmaması için.
     }
   }
@@ -52,15 +64,19 @@ export class AuditLogsService {
   /**
    * Yönetici paneli için logları listeler (Sayfalama ile).
    */
-  async getLogs(page: number = 1, limit: number = 20, timeRange?: string): Promise<IAuditLogsResponse> {
+  async getLogs(
+    page: number = 1,
+    limit: number = 20,
+    timeRange?: string,
+  ): Promise<IAuditLogsResponse> {
     const skip = (page - 1) * limit;
-    
+
     let matchStage: Record<string, any> = {};
     if (timeRange) {
       const now = new Date();
       let startDate: Date | undefined;
       if (timeRange === 'today') {
-        startDate = new Date(now.setHours(0,0,0,0));
+        startDate = new Date(now.setHours(0, 0, 0, 0));
       } else if (timeRange === 'week') {
         startDate = new Date();
         startDate.setDate(now.getDate() - 7);
@@ -74,12 +90,17 @@ export class AuditLogsService {
     }
 
     const [data, total] = await Promise.all([
-      this.auditLogModel.find(matchStage).sort({ createdAt: -1 }).skip(skip).limit(limit).exec() as Promise<AuditLogDocument[]>,
-      this.auditLogModel.countDocuments(matchStage).exec()
+      this.auditLogModel
+        .find(matchStage)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec() as Promise<AuditLogDocument[]>,
+      this.auditLogModel.countDocuments(matchStage).exec(),
     ]);
 
     return {
-      data: data.map(log => ({
+      data: data.map((log) => ({
         _id: log._id.toString(),
         transactionId: log.transactionId.toString(),
         agentId: log.agentId.toString(),
@@ -92,7 +113,7 @@ export class AuditLogsService {
       })),
       total,
       page,
-      totalPages: Math.ceil(total / limit)
+      totalPages: Math.ceil(total / limit),
     };
   }
 }

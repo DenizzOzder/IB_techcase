@@ -1,4 +1,12 @@
-import { Controller, Post, Body, UseGuards, Get, Delete, Param } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Get,
+  Delete,
+  Param,
+} from '@nestjs/common';
 import { UsersService } from '@/modules/Users/usersService';
 import { Roles } from '@/Common/Decorators/rolesDecorator';
 import { Role } from '@repo/types';
@@ -24,8 +32,8 @@ export class UsersController {
         _id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
-      }
+        role: user.role,
+      },
     };
   }
 
@@ -54,4 +62,3 @@ export class UsersController {
     return this.usersService.getAgentStats(user.sub);
   }
 }
-

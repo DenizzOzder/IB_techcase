@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '@/app.module';
 import { ValidationPipe } from '@nestjs/common';
@@ -16,24 +17,32 @@ async function bootstrap() {
    * - origin: Nuxt dev sunucusu (prod'da env'den okunmalı)
    */
   app.enableCors({
-    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : 'http://localhost:3000',
+    origin: process.env.CORS_ORIGIN
+      ? process.env.CORS_ORIGIN.split(',')
+      : 'http://localhost:3000',
     credentials: true,
   });
 
   // httpOnly cookie'leri okuyabilmek için cookie-parser middleware zorunlu
+
   app.use(cookieParser());
 
   // API yanıtlarını standartlaştır ve hassas alanları filtrele
   app.useGlobalInterceptors(new TransformInterceptor());
 
   // DTO sınıf tabanlı gelen doğrulama kodlarını tetikleyen en önemli duvar.
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,            // Belirtilmeyen DTO verilerini kes ve temizle
-    forbidNonWhitelisted: true, // Saçma sapan payloadlarda Exception at
-    transform: true,            // Gelen String ID'leri veya num'ları sınıflara döndür
-  }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true, // Belirtilmeyen DTO verilerini kes ve temizle
+      forbidNonWhitelisted: true, // Saçma sapan payloadlarda Exception at
+      transform: true, // Gelen String ID'leri veya num'ları sınıflara döndür
+    }),
+  );
 
   // Port Nuxt (3000) ile çakışmasın diye 3001'e kaydırıldı
   await app.listen(process.env.PORT ?? 3001);
 }
-bootstrap();
+bootstrap().catch((err) => {
+  console.error('Error starting server', err);
+  process.exit(1);
+});

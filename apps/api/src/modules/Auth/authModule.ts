@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment, @typescript-eslint/require-await */
 import { Module } from '@nestjs/common';
 import { AuthService } from '@/modules/Auth/authService';
 import { AuthController } from '@/modules/Auth/authController';

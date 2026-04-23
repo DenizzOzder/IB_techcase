@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return, @typescript-eslint/unbound-method, @typescript-eslint/no-unsafe-argument */
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { CommissionsService } from '@/modules/Commissions/commissionsService';
@@ -43,7 +44,10 @@ describe('CommissionsService', () => {
         commissionRate: 2, // %2
       };
 
-      const result = await service.calculateCommission(transactionData, mockSession);
+      const result = await service.calculateCommission(
+        transactionData,
+        mockSession,
+      );
 
       expect(result.transactionId).toBe(transactionData._id);
       expect(result.amount).toBe(20000); // 1,000,000 * 2 / 100 = 20,000
@@ -63,7 +67,10 @@ describe('CommissionsService', () => {
         commissionRate: 2,
       };
 
-      const result = await service.calculateCommission(transactionData, mockSession);
+      const result = await service.calculateCommission(
+        transactionData,
+        mockSession,
+      );
 
       expect(result.amount).toBe(20000);
       expect(result.agencyAmount).toBe(10000); // 50%
@@ -80,9 +87,11 @@ describe('CommissionsService', () => {
         commissionRate: 2,
       };
 
-      await expect(service.calculateCommission(transactionData, mockSession))
-        .rejects
-        .toThrow('İşlem tutarı veya komisyon oranı sıfır girildiği için hesaplama yapılamadı.');
+      await expect(
+        service.calculateCommission(transactionData, mockSession),
+      ).rejects.toThrow(
+        'İşlem tutarı veya komisyon oranı sıfır girildiği için hesaplama yapılamadı.',
+      );
     });
 
     it('should throw an error if commissionRate is 0 or negative', async () => {
@@ -93,9 +102,11 @@ describe('CommissionsService', () => {
         commissionRate: -1,
       };
 
-      await expect(service.calculateCommission(transactionData, mockSession))
-        .rejects
-        .toThrow('İşlem tutarı veya komisyon oranı sıfır girildiği için hesaplama yapılamadı.');
+      await expect(
+        service.calculateCommission(transactionData, mockSession),
+      ).rejects.toThrow(
+        'İşlem tutarı veya komisyon oranı sıfır girildiği için hesaplama yapılamadı.',
+      );
     });
   });
 });

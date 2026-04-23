@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/ban-ts-comment, @typescript-eslint/no-unused-vars */
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from '@/modules/Users/usersService';
 import { JwtService } from '@nestjs/jwt';
@@ -13,28 +14,49 @@ export class AuthService {
     private configService: ConfigService,
   ) {}
 
-  async validateUser(email: string, pass: string): Promise<any> {
+  async validateUser(
+    email: string,
+    pass: string,
+  ): Promise<
+    Omit<import('@/modules/Users/userSchema').UserDocument, 'password'>
+  > {
     const user = await this.usersService.findByEmail(email);
     if (!user) {
-      throw new UnauthorizedException('Girdiğiniz e-posta adresine ait bir hesap bulunamadı.');
+      throw new UnauthorizedException(
+        'Girdiğiniz e-posta adresine ait bir hesap bulunamadı.',
+      );
     }
 
     if (!user.password) {
-      throw new UnauthorizedException('Girdiğiniz şifre hatalı, lütfen tekrar deneyin.');
+      throw new UnauthorizedException(
+        'Girdiğiniz şifre hatalı, lütfen tekrar deneyin.',
+      );
     }
 
     const isMatch = await bcrypt.compare(pass, user.password);
     if (isMatch) {
       const { password, ...result } = user.toObject();
-      return result;
+      return result as Omit<
+        import('@/modules/Users/userSchema').UserDocument,
+        'password'
+      >;
     }
-    throw new UnauthorizedException('Şifre hatalı, lütfen kontrol edip tekrar deneyin.');
+    throw new UnauthorizedException(
+      'Şifre hatalı, lütfen kontrol edip tekrar deneyin.',
+    );
   }
 
   async login(loginDto: ILoginRequest): Promise<ILoginResponse> {
-    const user = await this.validateUser(loginDto.email, loginDto.password || '');
+    const user = await this.validateUser(
+      loginDto.email,
+      loginDto.password || '',
+    );
 
-    const payload: IJwtPayload = { sub: user._id.toString(), email: user.email, role: user.role };
+    const payload: IJwtPayload = {
+      sub: user._id.toString(),
+      email: user.email,
+      role: user.role,
+    };
 
     const accessToken = this.jwtService.sign(payload);
 
@@ -45,7 +67,10 @@ export class AuthService {
     });
 
     const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
-    await this.usersService.updateRefreshToken(user._id.toString(), hashedRefreshToken);
+    await this.usersService.updateRefreshToken(
+      user._id.toString(),
+      hashedRefreshToken,
+    );
 
     return {
       accessToken,
@@ -55,22 +80,36 @@ export class AuthService {
         email: user.email,
         name: user.name,
         role: user.role,
-      }
+      },
     };
   }
 
-  async refreshTokens(userId: string, refreshToken: string): Promise<ILoginResponse> {
+  async refreshTokens(
+    userId: string,
+    refreshToken: string,
+  ): Promise<ILoginResponse> {
     const user = await this.usersService.findById(userId);
     if (!user || !user.hashedRefreshToken) {
-      throw new UnauthorizedException('Hesabınıza ulaşılamıyor, lütfen tekrar giriş yapın.');
+      throw new UnauthorizedException(
+        'Hesabınıza ulaşılamıyor, lütfen tekrar giriş yapın.',
+      );
     }
 
-    const refreshTokenMatches = await bcrypt.compare(refreshToken, user.hashedRefreshToken);
+    const refreshTokenMatches = await bcrypt.compare(
+      refreshToken,
+      user.hashedRefreshToken,
+    );
     if (!refreshTokenMatches) {
-      throw new UnauthorizedException('Oturumunuzun süresi doldu veya geçersiz. Lütfen tekrar giriş yapın.');
+      throw new UnauthorizedException(
+        'Oturumunuzun süresi doldu veya geçersiz. Lütfen tekrar giriş yapın.',
+      );
     }
 
-    const payload: IJwtPayload = { sub: user._id.toString(), email: user.email, role: user.role };
+    const payload: IJwtPayload = {
+      sub: user._id.toString(),
+      email: user.email,
+      role: user.role,
+    };
 
     const newAccessToken = this.jwtService.sign(payload);
     // @ts-ignore
@@ -80,7 +119,10 @@ export class AuthService {
     });
 
     const hashedRefreshToken = await bcrypt.hash(newRefreshToken, 10);
-    await this.usersService.updateRefreshToken(user._id.toString(), hashedRefreshToken);
+    await this.usersService.updateRefreshToken(
+      user._id.toString(),
+      hashedRefreshToken,
+    );
 
     return {
       accessToken: newAccessToken,
@@ -90,7 +132,7 @@ export class AuthService {
         email: user.email,
         name: user.name,
         role: user.role,
-      }
+      },
     };
   }
 
@@ -105,7 +147,9 @@ export class AuthService {
         secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
       });
     } catch {
-      throw new UnauthorizedException('Oturum süreniz doldu, lütfen güvenliğiniz için yeniden giriş yapın.');
+      throw new UnauthorizedException(
+        'Oturum süreniz doldu, lütfen güvenliğiniz için yeniden giriş yapın.',
+      );
     }
     return this.refreshTokens(payload.sub, refreshToken);
   }

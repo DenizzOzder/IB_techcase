@@ -91,7 +91,7 @@ const chartOptions = {
       },
       ticks: {
         font: { size: 10 },
-        callback: (val: any) => {
+        callback: (val: number | string) => {
           if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M';
           if (val >= 1000) return (val / 1000).toFixed(0) + 'K';
           return val;

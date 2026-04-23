@@ -20,13 +20,15 @@ import { AuditLogsModule } from '@/modules/AuditLogs/auditLogsModule';
       isGlobal: true,
       envFilePath: '../../.env',
     }),
-    ThrottlerModule.forRoot([{
-      ttl: 60000,
-      limit: 100,
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 100,
+      },
+    ]),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService) => ({
         uri: configService.get<string>('MONGODB_URI'),
       }),
       inject: [ConfigService],
@@ -34,6 +36,7 @@ import { AuditLogsModule } from '@/modules/AuditLogs/auditLogsModule';
     CacheModule.registerAsync({
       isGlobal: true,
       imports: [ConfigModule],
+
       useFactory: async (configService: ConfigService) => {
         const redisHost = configService.get<string>('REDIS_HOST');
         if (redisHost) {

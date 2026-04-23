@@ -5,7 +5,10 @@ import { ITransaction, TransactionStatus } from '@repo/types';
 export type TransactionDocument = Transaction & Document;
 
 @Schema({ timestamps: true })
-export class Transaction implements Omit<ITransaction, '_id' | 'agentId' | 'sellingAgentId' | 'agentName' | 'createdAt' | 'updatedAt'> {
+export class Transaction implements Omit<
+  ITransaction,
+  '_id' | 'agentId' | 'sellingAgentId' | 'agentName' | 'createdAt' | 'updatedAt'
+> {
   @Prop({ required: true })
   propertyTitle: string;
 
@@ -30,10 +33,13 @@ export class Transaction implements Omit<ITransaction, '_id' | 'agentId' | 'sell
   @Prop({ required: true })
   commissionRate: number;
 
-  @Prop({ type: String, enum: TransactionStatus, default: TransactionStatus.AGREEMENT })
+  @Prop({
+    type: String,
+    enum: TransactionStatus,
+    default: TransactionStatus.AGREEMENT,
+  })
   status: TransactionStatus;
 }
 
 export const TransactionSchema = SchemaFactory.createForClass(Transaction);
 TransactionSchema.index({ agentId: 1, status: 1, createdAt: -1 });
-

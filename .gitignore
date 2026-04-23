@@ -41,3 +41,8 @@ TODO.md
 
 # Scratch Files
 scratch/
+
+# One-off script fixes
+fix*.js
+lint*.txt
+lint*.log

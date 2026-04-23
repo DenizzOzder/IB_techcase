@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
 import { ILoginRequest } from '@repo/types';
 

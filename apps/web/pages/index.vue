@@ -222,7 +222,8 @@ const {
   fetchMyStats
 } = useAgents();
 
-const myStats = ref<any>(null);
+import type { IStatsResponse } from '@repo/types';
+const myStats = ref<IStatsResponse | null>(null);
 
 // Tab state
 const activeTab = ref<'transactions' | 'agents' | 'logs'>('transactions');

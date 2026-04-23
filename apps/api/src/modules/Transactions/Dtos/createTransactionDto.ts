@@ -1,4 +1,12 @@
-import { IsString, IsNumber, IsPositive, IsNotEmpty, Min, Max, IsOptional } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsPositive,
+  IsNotEmpty,
+  Min,
+  Max,
+  IsOptional,
+} from 'class-validator';
 import { ICreateTransactionRequest } from '@repo/types';
 
 export class CreateTransactionDto implements ICreateTransactionRequest {
@@ -7,7 +15,10 @@ export class CreateTransactionDto implements ICreateTransactionRequest {
   propertyTitle: string;
 
   @IsNumber({}, { message: 'Satış tutarı sayısal bir değer olmalıdır.' })
-  @IsPositive({ message: 'Satış tutarı sıfırdan büyük olmalıdır. Lütfen geçerli bir tutar girin.' })
+  @IsPositive({
+    message:
+      'Satış tutarı sıfırdan büyük olmalıdır. Lütfen geçerli bir tutar girin.',
+  })
   propertyPrice: number;
 
   // agentId → JWT token'dan alınır, client payload'ında gelmez (güvenlik gereği)

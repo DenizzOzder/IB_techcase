@@ -1,10 +1,27 @@
-import { Injectable, OnModuleInit, Logger, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  OnModuleInit,
+  Logger,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { User, UserDocument } from '@/modules/Users/userSchema';
-import { Transaction, TransactionDocument } from '@/modules/Transactions/Schemas/transactionSchema';
-import { Commission, CommissionDocument } from '@/modules/Commissions/Schemas/commissionSchema';
-import { Role, TransactionStatus, IAgentResponse, IAgentDetailResponse } from '@repo/types';
+import {
+  Transaction,
+  TransactionDocument,
+} from '@/modules/Transactions/Schemas/transactionSchema';
+import {
+  Commission,
+  CommissionDocument,
+} from '@/modules/Commissions/Schemas/commissionSchema';
+import {
+  Role,
+  TransactionStatus,
+  IAgentResponse,
+  IAgentDetailResponse,
+} from '@repo/types';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -13,8 +30,10 @@ export class UsersService implements OnModuleInit {
 
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
-    @InjectModel(Transaction.name) private transactionModel: Model<TransactionDocument>,
-    @InjectModel(Commission.name) private commissionModel: Model<CommissionDocument>,
+    @InjectModel(Transaction.name)
+    private transactionModel: Model<TransactionDocument>,
+    @InjectModel(Commission.name)
+    private commissionModel: Model<CommissionDocument>,
   ) {}
 
   async onModuleInit() {
@@ -25,7 +44,9 @@ export class UsersService implements OnModuleInit {
     try {
       const count = await this.userModel.countDocuments();
       if (count === 0) {
-        this.logger.log('No users found in database. Seeding default ADMIN user...');
+        this.logger.log(
+          'No users found in database. Seeding default ADMIN user...',
+        );
         const hashedPassword = await bcrypt.hash('admin123', 10);
         await this.userModel.create({
           name: 'Super Admin',
@@ -33,7 +54,9 @@ export class UsersService implements OnModuleInit {
           password: hashedPassword,
           role: Role.ADMIN,
         });
-        this.logger.log('Default ADMIN user created: admin@bmakas.com / admin123');
+        this.logger.log(
+          'Default ADMIN user created: admin@bmakas.com / admin123',
+        );
       }
     } catch (error) {
       this.logger.error('Failed to seed default admin user', error);
@@ -48,10 +71,16 @@ export class UsersService implements OnModuleInit {
     return this.userModel.findById(userId).exec();
   }
 
-  async createAgent(data: { name: string; email: string; password?: string }): Promise<UserDocument> {
+  async createAgent(data: {
+    name: string;
+    email: string;
+    password?: string;
+  }): Promise<UserDocument> {
     const existing = await this.findByEmail(data.email);
     if (existing) {
-      throw new ConflictException('Girdiğiniz e-posta adresi zaten kullanılıyor. Lütfen farklı bir adres deneyin.');
+      throw new ConflictException(
+        'Girdiğiniz e-posta adresi zaten kullanılıyor. Lütfen farklı bir adres deneyin.',
+      );
     }
 
     const passwordToHash = data.password || 'agent123';
@@ -68,62 +97,81 @@ export class UsersService implements OnModuleInit {
   }
 
   async updateRefreshToken(userId: string, hashedToken: string | null) {
-    return this.userModel.findByIdAndUpdate(userId, { hashedRefreshToken: hashedToken }).exec();
+    return this.userModel
+      .findByIdAndUpdate(userId, { hashedRefreshToken: hashedToken })
+      .exec();
   }
 
   // ─── Agent Yönetimi (Admin) ────────────────────────────────────────────────
 
   async findAllAgents(): Promise<IAgentResponse[]> {
-    const agents = await this.userModel.find({ role: Role.AGENT }).sort({ createdAt: -1 }).exec();
-    return agents.map(agent => ({
+    const agents = await this.userModel
+      .find({ role: Role.AGENT })
+      .sort({ createdAt: -1 })
+      .exec();
+    return agents.map((agent) => ({
       _id: agent._id.toString(),
       name: agent.name,
       email: agent.email,
       role: agent.role,
       isActive: agent.isActive,
-      createdAt: (agent as unknown as { createdAt?: Date }).createdAt?.toISOString() || new Date().toISOString(),
+      createdAt:
+        (agent as unknown as { createdAt?: Date }).createdAt?.toISOString() ||
+        new Date().toISOString(),
     }));
   }
 
   async deactivateAgent(agentId: string): Promise<void> {
-    const agent = await this.userModel.findByIdAndUpdate(agentId, { isActive: false }).exec();
+    const agent = await this.userModel
+      .findByIdAndUpdate(agentId, { isActive: false })
+      .exec();
     if (!agent) {
-      throw new NotFoundException('İşlem yapmak istediğiniz danışman sistemde bulunamadı.');
+      throw new NotFoundException(
+        'İşlem yapmak istediğiniz danışman sistemde bulunamadı.',
+      );
     }
   }
 
   async getAgentStats(agentId: string): Promise<IAgentDetailResponse> {
     const agent = await this.userModel.findById(agentId).exec();
     if (!agent) {
-      throw new NotFoundException('İstatistikleri istenen danışman sistemde bulunamadı.');
+      throw new NotFoundException(
+        'İstatistikleri istenen danışman sistemde bulunamadı.',
+      );
     }
 
     const objId = new Types.ObjectId(agentId);
 
     const [txStats] = await Promise.all([
-      this.transactionModel.aggregate([
-        { $match: { 
+      this.transactionModel.aggregate<{
+        _id: string;
+        count: number;
+        volume: number;
+        totalCommission: number;
+      }>([
+        {
+          $match: {
             $or: [{ agentId: objId }, { sellingAgentId: objId }],
-            status: { $ne: 'CANCELLED' } 
-          } 
+            status: { $ne: TransactionStatus.CANCELLED },
+          },
         },
-        { 
+        {
           $lookup: {
             from: 'commissions',
             localField: '_id',
             foreignField: 'transactionId',
-            as: 'commission'
-          }
+            as: 'commission',
+          },
         },
         {
           $addFields: {
-            commissionDoc: { $arrayElemAt: ['$commission', 0] }
-          }
+            commissionDoc: { $arrayElemAt: ['$commission', 0] },
+          },
         },
-        { 
-          $group: { 
-            _id: '$status', 
-            count: { $sum: 1 }, 
+        {
+          $group: {
+            _id: '$status',
+            count: { $sum: 1 },
             volume: { $sum: '$propertyPrice' },
             totalCommission: {
               $sum: {
@@ -131,24 +179,39 @@ export class UsersService implements OnModuleInit {
                   { $eq: ['$status', TransactionStatus.COMPLETED] },
                   {
                     $add: [
-                      { $cond: [{ $eq: ['$agentId', objId] }, { $ifNull: ['$commissionDoc.listingAgentAmount', 0] }, 0] },
-                      { $cond: [{ $eq: ['$sellingAgentId', objId] }, { $ifNull: ['$commissionDoc.sellingAgentAmount', 0] }, 0] }
-                    ]
+                      {
+                        $cond: [
+                          { $eq: ['$agentId', objId] },
+                          { $ifNull: ['$commissionDoc.listingAgentAmount', 0] },
+                          0,
+                        ],
+                      },
+                      {
+                        $cond: [
+                          { $eq: ['$sellingAgentId', objId] },
+                          { $ifNull: ['$commissionDoc.sellingAgentAmount', 0] },
+                          0,
+                        ],
+                      },
+                    ],
                   },
-                  0
-                ]
-              }
-            }
-          } 
-        }
-      ])
+                  0,
+                ],
+              },
+            },
+          },
+        },
+      ]),
     ]);
 
-    let totalTransactions = 0, completedTransactions = 0, totalVolume = 0, totalCommission = 0;
-    
+    let totalTransactions = 0,
+      completedTransactions = 0,
+      totalVolume = 0,
+      totalCommission = 0;
+
     for (const row of txStats) {
       totalTransactions += row.count;
-      if (row._id === TransactionStatus.COMPLETED) {
+      if (row._id === (TransactionStatus.COMPLETED as string)) {
         completedTransactions = row.count;
         totalVolume = row.volume;
         totalCommission = row.totalCommission;
@@ -161,14 +224,15 @@ export class UsersService implements OnModuleInit {
       email: agent.email,
       role: agent.role,
       isActive: agent.isActive,
-      createdAt: (agent as unknown as { createdAt?: Date }).createdAt?.toISOString() || new Date().toISOString(),
+      createdAt:
+        (agent as unknown as { createdAt?: Date }).createdAt?.toISOString() ||
+        new Date().toISOString(),
       stats: {
         totalTransactions,
         completedTransactions,
         totalVolume,
         totalCommission,
-      }
+      },
     };
   }
 }
-

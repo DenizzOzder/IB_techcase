@@ -1,4 +1,14 @@
-import { Controller, Post, Body, Res, Req, HttpCode, HttpStatus, UnauthorizedException } from '@nestjs/common';
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
+import {
+  Controller,
+  Post,
+  Body,
+  Res,
+  Req,
+  HttpCode,
+  HttpStatus,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthService } from '@/modules/Auth/authService';
 import { LoginDto } from '@/modules/Auth/Dtos/loginDto';
 import type { Response, Request } from 'express';
@@ -48,7 +58,9 @@ export class AuthController {
   ) {
     const refreshToken = req.cookies?.['refreshToken'];
     if (!refreshToken) {
-      throw new UnauthorizedException('Güvenliğiniz için tekrar giriş yapmanız gerekmektedir.');
+      throw new UnauthorizedException(
+        'Güvenliğiniz için tekrar giriş yapmanız gerekmektedir.',
+      );
     }
 
     const result = await this.authService.refreshTokensByToken(refreshToken);
@@ -61,15 +73,13 @@ export class AuthController {
 
   @HttpCode(HttpStatus.OK)
   @Post('logout')
-  async logout(
-    @Req() req: Request,
-    @Res({ passthrough: true }) res: Response,
-  ) {
+  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const refreshToken = req.cookies?.['refreshToken'];
     if (refreshToken) {
       try {
         // Token geçerliyse DB'deki hashedRefreshToken'ı temizle
-        const result = await this.authService.refreshTokensByToken(refreshToken);
+        const result =
+          await this.authService.refreshTokensByToken(refreshToken);
         await this.authService.logout(result.user._id);
       } catch {
         // Token süresi dolmuş olabilir, yine de cookie'yi temizle

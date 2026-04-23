@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { TransactionsService } from '@/modules/Transactions/transactionsService';
 import { CreateTransactionDto } from '@/modules/Transactions/Dtos/createTransactionDto';
 import { UpdateTransactionStatusDto } from '@/modules/Transactions/Dtos/updateTransactionStatusDto';
@@ -31,7 +40,10 @@ export class TransactionsController {
   /** Yeni işlem: agentId JWT'den alınır, client göndermiyor */
   @Post()
   @Roles(Role.ADMIN, Role.AGENT)
-  async create(@Body() createDto: CreateTransactionDto, @CurrentUser() user: IJwtPayload) {
+  async create(
+    @Body() createDto: CreateTransactionDto,
+    @CurrentUser() user: IJwtPayload,
+  ) {
     return this.transactionsService.createTransaction(createDto, user.sub);
   }
 
@@ -42,19 +54,28 @@ export class TransactionsController {
     @Body() updateDto: UpdateTransactionStatusDto,
     @CurrentUser() user: IJwtPayload,
   ) {
-    return this.transactionsService.updateTransactionStatus(id, updateDto, user);
+    return this.transactionsService.updateTransactionStatus(
+      id,
+      updateDto,
+      user,
+    );
   }
 
   @Patch(':id/cancel')
   @Roles(Role.ADMIN, Role.AGENT)
-  async cancel(@Param('id', ParseMongoIdPipe) id: string, @CurrentUser() user: IJwtPayload) {
+  async cancel(
+    @Param('id', ParseMongoIdPipe) id: string,
+    @CurrentUser() user: IJwtPayload,
+  ) {
     return this.transactionsService.cancelTransaction(id, user);
   }
 
   @Patch(':id/rollback')
   @Roles(Role.ADMIN, Role.AGENT)
-  async rollback(@Param('id', ParseMongoIdPipe) id: string, @CurrentUser() user: IJwtPayload) {
+  async rollback(
+    @Param('id', ParseMongoIdPipe) id: string,
+    @CurrentUser() user: IJwtPayload,
+  ) {
     return this.transactionsService.rollbackTransactionStatus(id, user);
   }
 }
-

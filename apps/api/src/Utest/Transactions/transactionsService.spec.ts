@@ -10,9 +10,12 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 describe('TransactionsService', () => {
   let service: TransactionsService;
-  let mockCommissionsService: any;
-  let mockAuditLogsService: any;
-  let mockTransactionModel: any;
+  let mockCommissionsService: Record<string, jest.Mock>;
+  let mockAuditLogsService: Record<string, jest.Mock>;
+  let mockTransactionModel: Record<
+    string,
+    jest.Mock | Record<string, jest.Mock>
+  >;
 
   beforeEach(async () => {
     mockCommissionsService = {
@@ -58,46 +61,65 @@ describe('TransactionsService', () => {
   });
 
   describe('updateTransactionStatus', () => {
-    const mockUser = { sub: new Types.ObjectId().toString(), email: 'agent@test.com', role: Role.AGENT };
+    const mockUser = {
+      sub: new Types.ObjectId().toString(),
+      email: 'agent@test.com',
+      role: Role.AGENT,
+    };
     const txId = new Types.ObjectId().toString();
 
     it('should throw NotFoundException if transaction does not exist', async () => {
       mockTransactionModel.findById.mockReturnValue({
-        session: jest.fn().mockResolvedValue(null)
+        session: jest.fn().mockResolvedValue(null),
       });
 
-      await expect(service.updateTransactionStatus(txId, { status: TransactionStatus.EARNEST_MONEY }, mockUser))
-        .rejects.toThrow(NotFoundException);
+      await expect(
+        service.updateTransactionStatus(
+          txId,
+          { status: TransactionStatus.EARNEST_MONEY },
+          mockUser,
+        ),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException if agent is not the owner', async () => {
       const tx = {
         _id: txId,
         agentId: new Types.ObjectId(),
-        status: TransactionStatus.AGREEMENT
+        status: TransactionStatus.AGREEMENT,
       };
-      
+
       mockTransactionModel.findById.mockReturnValue({
-        session: jest.fn().mockResolvedValue(tx)
+        session: jest.fn().mockResolvedValue(tx),
       });
 
-      await expect(service.updateTransactionStatus(txId, { status: TransactionStatus.EARNEST_MONEY }, mockUser))
-        .rejects.toThrow(BadRequestException);
+      await expect(
+        service.updateTransactionStatus(
+          txId,
+          { status: TransactionStatus.EARNEST_MONEY },
+          mockUser,
+        ),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should throw BadRequestException if trying to skip state machine flow (AGREEMENT -> TITLE_DEED)', async () => {
       const tx = {
         _id: txId,
         agentId: mockUser.sub,
-        status: TransactionStatus.AGREEMENT
+        status: TransactionStatus.AGREEMENT,
       };
-      
+
       mockTransactionModel.findById.mockReturnValue({
-        session: jest.fn().mockResolvedValue(tx)
+        session: jest.fn().mockResolvedValue(tx),
       });
 
-      await expect(service.updateTransactionStatus(txId, { status: TransactionStatus.TITLE_DEED }, mockUser))
-        .rejects.toThrow(BadRequestException);
+      await expect(
+        service.updateTransactionStatus(
+          txId,
+          { status: TransactionStatus.TITLE_DEED },
+          mockUser,
+        ),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should correctly advance state from AGREEMENT to EARNEST_MONEY', async () => {
@@ -106,19 +128,29 @@ describe('TransactionsService', () => {
         agentId: mockUser.sub,
         propertyTitle: 'Test Prop',
         status: TransactionStatus.AGREEMENT,
-        save: jest.fn().mockResolvedValue(true)
+        save: jest.fn().mockResolvedValue(true),
       };
-      
+
       mockTransactionModel.findById.mockReturnValue({
-        session: jest.fn().mockResolvedValue(tx)
+        session: jest.fn().mockResolvedValue(tx),
       });
 
-      const res = await service.updateTransactionStatus(txId, { status: TransactionStatus.EARNEST_MONEY }, mockUser);
+      const res = await service.updateTransactionStatus(
+        txId,
+        { status: TransactionStatus.EARNEST_MONEY },
+        mockUser,
+      );
 
       expect(res.status).toBe(TransactionStatus.EARNEST_MONEY);
       expect(tx.save).toHaveBeenCalled();
       expect(mockAuditLogsService.logAction).toHaveBeenCalledWith(
-        txId, mockUser.sub, 'Test Prop', AuditLogAction.ADVANCED, TransactionStatus.EARNEST_MONEY, TransactionStatus.AGREEMENT, expect.anything()
+        txId,
+        mockUser.sub,
+        'Test Prop',
+        AuditLogAction.ADVANCED,
+        TransactionStatus.EARNEST_MONEY,
+        TransactionStatus.AGREEMENT,
+        expect.anything(),
       );
     });
 
@@ -128,14 +160,18 @@ describe('TransactionsService', () => {
         agentId: mockUser.sub,
         propertyTitle: 'Test Prop',
         status: TransactionStatus.TITLE_DEED,
-        save: jest.fn().mockResolvedValue(true)
+        save: jest.fn().mockResolvedValue(true),
       };
-      
+
       mockTransactionModel.findById.mockReturnValue({
-        session: jest.fn().mockResolvedValue(tx)
+        session: jest.fn().mockResolvedValue(tx),
       });
 
-      await service.updateTransactionStatus(txId, { status: TransactionStatus.COMPLETED }, mockUser);
+      await service.updateTransactionStatus(
+        txId,
+        { status: TransactionStatus.COMPLETED },
+        mockUser,
+      );
 
       expect(tx.status).toBe(TransactionStatus.COMPLETED);
       expect(mockCommissionsService.calculateCommission).toHaveBeenCalled();

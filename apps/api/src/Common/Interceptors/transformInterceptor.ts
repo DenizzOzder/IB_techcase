@@ -7,6 +7,7 @@ import {
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { instanceToPlain } from 'class-transformer';
+import type { Response } from 'express';
 
 export interface ApiResponse<T> {
   statusCode: number;
@@ -15,25 +16,31 @@ export interface ApiResponse<T> {
 }
 
 @Injectable()
-export class TransformInterceptor<T> implements NestInterceptor<T, any> {
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+export class TransformInterceptor<T> implements NestInterceptor<
+  T,
+  ApiResponse<T>
+> {
+  intercept(
+    context: ExecutionContext,
+    next: CallHandler,
+  ): Observable<ApiResponse<T>> {
     const ctx = context.switchToHttp();
-    const response = ctx.getResponse();
+    const response = ctx.getResponse<Response>();
 
     return next.handle().pipe(
-      map(data => {
+      map((data) => {
         // Mongoose document'ları plain object'e çevir ve __v vs. gizle
         const transformedData = instanceToPlain(data, {
           excludeExtraneousValues: false,
           enableImplicitConversion: true,
-        });
+        }) as T;
 
         // Emlak Danışmanı vs. için genel standart sarmalayıcı
         return {
           statusCode: response.statusCode,
           data: transformedData,
         };
-      })
+      }),
     );
   }
 }
