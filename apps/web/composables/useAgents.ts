@@ -2,9 +2,9 @@ import { ref } from 'vue';
 import { IAgentResponse, IAgentDetailResponse } from '@repo/types';
 import { useAuthStore } from '@/stores/authStore';
 
-const API = 'http://localhost:3001';
-
 export function useAgents() {
+  const config = useRuntimeConfig();
+  const API = config.public.apiBaseUrl;
   const authStore = useAuthStore();
   const agents = ref<IAgentResponse[]>([]);
   const selectedAgent = ref<IAgentDetailResponse | null>(null);

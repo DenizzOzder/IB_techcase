@@ -2,9 +2,9 @@ import { ref } from 'vue';
 import { IAuditLogsResponse } from '@repo/types';
 import { useAuthStore } from '@/stores/authStore';
 
-const API = 'http://localhost:3001';
-
 export function useLogs() {
+  const config = useRuntimeConfig();
+  const API = config.public.apiBaseUrl;
   const authStore = useAuthStore();
   const logsData = ref<IAuditLogsResponse | null>(null);
   const isFetching = ref(false);

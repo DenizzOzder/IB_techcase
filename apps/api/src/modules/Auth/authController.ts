@@ -11,11 +11,12 @@ import type { Response, Request } from 'express';
  *   - Logout → Cookie temizlenir, DB'deki hashedRefreshToken null'a çekilir
  */
 
+const isProd = process.env.NODE_ENV === 'production';
 const REFRESH_COOKIE_OPTIONS = {
   httpOnly: true,
-  // Production'da true olmalı (HTTPS zorunlu). Dev'de false bırakılır.
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'strict' as const,
+  // Production'da true olmalı (HTTPS zorunlu) ve Third-Party için SameSite=None
+  secure: isProd,
+  sameSite: isProd ? ('none' as const) : ('strict' as const),
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 gün (ms cinsinden)
   path: '/',
 };

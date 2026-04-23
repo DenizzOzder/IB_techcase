@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: ib-techcase-api
+    env: node
+    buildCommand: npm install && npx turbo run build --filter=api
+    startCommand: cd apps/api && npm run start:prod
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false

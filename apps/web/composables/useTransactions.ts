@@ -3,14 +3,14 @@ import { ITransaction, TransactionStatus, ICreateTransactionRequest } from '@rep
 import { $fetch } from 'ofetch';
 import { useAuthStore } from '@/stores/authStore';
 
-const API = 'http://localhost:3001';
-
 /**
  * Tüm API isteklerine Authorization header ve credentials eklenir.
  * - Authorization: Bearer <accessToken> → JWT korumalı endpoint'ler için
  * - credentials: 'include' → httpOnly cookie otomatik gönderilir
  */
 export const useTransactions = () => {
+  const config = useRuntimeConfig();
+  const API = config.public.apiBaseUrl;
   const isFetching = ref(false);
   const error = ref<string | null>(null);
   const transactions = ref<ITransaction[]>([]);

@@ -1,8 +1,6 @@
 import { $fetch } from 'ofetch';
 import { useAuthStore } from '@/stores/authStore';
 
-const API = 'http://localhost:3001';
-
 interface AuthResponse {
   accessToken: string;
   user: {
@@ -14,6 +12,8 @@ interface AuthResponse {
 }
 
 export const useAuth = () => {
+  const config = useRuntimeConfig();
+  const API = config.public.apiBaseUrl;
   const authStore = useAuthStore();
   const router = useRouter();
 
