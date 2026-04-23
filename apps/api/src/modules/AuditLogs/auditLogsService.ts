@@ -58,7 +58,7 @@ export class AuditLogsService {
     let matchStage: Record<string, any> = {};
     if (timeRange) {
       const now = new Date();
-      let startDate: Date;
+      let startDate: Date | undefined;
       if (timeRange === 'today') {
         startDate = new Date(now.setHours(0,0,0,0));
       } else if (timeRange === 'week') {

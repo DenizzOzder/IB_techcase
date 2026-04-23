@@ -34,12 +34,21 @@ import { AuditLogsModule } from '@/modules/AuditLogs/auditLogsModule';
     CacheModule.registerAsync({
       isGlobal: true,
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        store: await redisStore({
-          url: `redis://${configService.get<string>('REDIS_HOST') || 'localhost'}:${configService.get<number>('REDIS_PORT') || 6379}`,
+      useFactory: async (configService: ConfigService) => {
+        const redisHost = configService.get<string>('REDIS_HOST');
+        if (redisHost) {
+          return {
+            store: await redisStore({
+              url: `redis://${redisHost}:${configService.get<number>('REDIS_PORT') || 6379}`,
+              ttl: 300 * 1000,
+            }),
+          };
+        }
+        // Fallback to in-memory store if REDIS_HOST is not set in .env
+        return {
           ttl: 300 * 1000,
-        }),
-      }),
+        };
+      },
       inject: [ConfigService],
     }),
     TransactionsModule,
