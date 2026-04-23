@@ -4,6 +4,7 @@ import { ValidationPipe } from '@nestjs/common';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const cookieParser = require('cookie-parser');
 import helmet from 'helmet';
+import { TransformInterceptor } from '@/Common/Interceptors/transformInterceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -21,6 +22,9 @@ async function bootstrap() {
 
   // httpOnly cookie'leri okuyabilmek için cookie-parser middleware zorunlu
   app.use(cookieParser());
+
+  // API yanıtlarını standartlaştır ve hassas alanları filtrele
+  app.useGlobalInterceptors(new TransformInterceptor());
 
   // DTO sınıf tabanlı gelen doğrulama kodlarını tetikleyen en önemli duvar.
   app.useGlobalPipes(new ValidationPipe({
