@@ -72,17 +72,17 @@ AGREEMENT → EARNEST_MONEY → TITLE_DEED → COMPLETED
 | ACID Transaction | Komisyon ve statü güncellemesi atomik; hata durumunda `abortTransaction()` |
 | Hata Sarmalama | `BadRequestException` / `NotFoundException` tekrar sarmalanmaz, ham `error.message` istemciye sızdırılmaz |
 
-### 5.2 Tespit Edilen Güvenlik Açıkları ve Öneriler
-> ⚠️ Aşağıdakiler mevcut MVP kapsamında bilinçli olarak scope dışı bırakılmıştır; üretim ortamı için tamamlanmalıdır.
+### 5.2 Güvenlik Kararları ve Uygulamalar
+> ✅ Başlangıçta MVP kapsamında eksik olan ve projenin ilerleyen fazlarında tespit edilen tüm güvenlik önlemleri, üretim ortamı (production) standartlarını karşılayacak şekilde mimariye entegre edilmiştir.
 
-| Açık | Risk Seviyesi | Öneri |
-|------|--------------|-------|
-| ~~Auth / JWT yok~~ | ✅ Tamamlandı | JWT + `PassportStrategy` + `RolesGuard` + httpOnly cookie ile güvence altına alındı |
-| Rate Limiting yok | 🟡 Orta | `@nestjs/throttler` ile endpoint başına istek sınırı konulmalı |
-| CORS `credentials: true` ile yapılandırıldı | ✅ Tamamlandı | `origin` whitelist + `credentials: true` — production için `CORS_ORIGIN` env'den okunur |
-| MongoDB ObjectId doğrulaması yok | 🟡 Orta | `ParseMongoIdPipe` ile geçersiz ID formatları erken bloklanmalı |
-| Input sanitizasyon | 🟢 Düşük | `class-sanitizer` veya `helmet` header güvenliği eklenebilir |
-| HTTPS zorunluluğu yok | 🟡 Orta | Production'da reverse proxy (nginx) ile TLS terminasyonu sağlanmalı |
+| Güvenlik Katmanı | Karar ve Uygulama |
+|------------------|-------------------|
+| **Kimlik Doğrulama (Auth)** | JWT, `PassportStrategy` ve `RolesGuard` mimarisi kuruldu. Tokenlar XSS ataklarına karşı `httpOnly` cookie ile güvence altına alındı. |
+| **Hız Sınırlandırma (Rate Limiting)** | Brute-force ve DDoS saldırılarını engellemek amacıyla `@nestjs/throttler` kullanılarak endpoint başına global istek sınırı (Rate Limiting) kararı alındı ve uygulandı. |
+| **CORS ve Origin Güvenliği** | Güvenlik risklerini önlemek için `origin` whitelist'e alındı ve cross-origin isteklerinde `credentials: true` yapılandırıldı. Production için dinamik `CORS_ORIGIN` ortam değişkeni kullanılmasına karar verildi. |
+| **Veri Bütünlüğü (ObjectId Doğrulaması)** | Veritabanı seviyesinde Query injection hatalarını önlemek adına `ParseMongoIdPipe` yazılarak geçersiz MongoDB ObjectId formatlarının controller seviyesinde erken bloklanması kararlaştırıldı ve uygulandı. |
+| **HTTP Başlık Güvenliği (Helmet)** | XSS, Clickjacking gibi saldırılara karşı savunma katmanı oluşturmak için `helmet` kütüphanesi projeye entegre edildi ve genel header güvenliği sağlandı. |
+| **TLS/HTTPS İletişimi** | Uygulamanın canlı ortamında veri trafiğini şifrelemek adına, deployment platformlarının (Render ve Vercel) TLS terminasyonu üzerinden HTTPS zorunluluğu güvence altına alındı. |
 
 ---
 
