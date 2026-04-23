@@ -68,6 +68,29 @@ Anlaşma Sağlandı  →  Kapora Alındı  →  Tapuda  →  Tamamlandı
 - Hatalı veya eksik bilgi girildiğinde sistem bunu anında engeller ve danışmana açıkça bildirir.
 - Komisyon kaydı ile durum güncellemesi her zaman birlikte gerçekleşir; biri başarısız olursa diğeri de geri alınır. Yarım kayıt oluşmaz.
 
+## 🧪 Birim Testleri (Unit Tests)
+
+Backend (NestJS) tarafındaki iş kuralları (komisyon hesaplamaları ve statü geçişleri) Jest ile test edilmiştir.
+Testleri çalıştırmak için:
+```bash
+pnpm turbo run test --filter=api
+```
+*(Tüm testler komisyon oranlarına ve "Satan/Listeleyen Danışman" senaryolarına tam uyum sağlamaktadır).*
+
+---
+
+## ☁️ Canlı Ortam (Deployment)
+
+Proje Vercel ve Render üzerine anında deploy edilebilir yapıdadır:
+
+### 1. Backend (Render)
+- Repo kökündeki `render.yaml` dosyası kullanılarak **Blueprint** olarak tek tıkla ayağa kaldırılabilir.
+- Render ayarlarından `CORS_ORIGIN` değişkenine Frontend domainini (örn: `https://ib-techcase.vercel.app`) vermeniz güvenli Cross-Origin cookie paylaşımını sağlar.
+
+### 2. Frontend (Vercel)
+- Vercel üzerinden projeyi import edip `Root Directory` olarak **`apps/web`** seçilmelidir.
+- Ortam değişkeni (Environment Variables) olarak `NUXT_PUBLIC_API_BASE_URL` (Render URL'i) eklenmesi yeterlidir.
+
 ---
 
 ## 📄 Teknik Belgeler

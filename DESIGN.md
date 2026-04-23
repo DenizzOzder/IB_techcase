@@ -246,4 +246,20 @@ Sistemden danışman silmek (Hard Delete), o danışmanın geçmişteki satış 
 
 ---
 
-*Bu doküman proje boyunca güncel tutulmaktadır. Son güncelleme: Admin Panel Tasarımı, Soft Delete ve Audit Log Entegrasyonu.*
+## 12. Deployment, Testler ve UX Yaklaşımı
+
+### 12.1 Canlı Ortam Mimarisi (Render & Vercel)
+- **Vercel (Frontend):** Uygulama `apps/web` kök dizininden Vercel'e deploy edilmiştir. Çevre değişkeni olarak `NUXT_PUBLIC_API_BASE_URL` kullanılarak esneklik sağlanmıştır.
+- **Render (Backend):** `render.yaml` ile Infrastructure-as-Code prensibi uygulanmıştır. `pnpm` paket yöneticisi `render.yaml` içinde derleme komutu olarak özellikle seçilmiş, `CORS_ORIGIN` değişkenine Vercel domain'i verilmiştir.
+- **Cross-Domain Session Güvenliği:** Backend ve Frontend farklı domainlerde çalıştığı için `authController.ts` içindeki `REFRESH_COOKIE_OPTIONS`, Production modunda `SameSite='none'` ve `Secure=true` olarak güncellenmiş, Third-Party Cookie politikalarına %100 uyum sağlanmıştır.
+
+### 12.2 Kullanıcı Deneyimi (UX) ve Hata Yönetimi
+Yazılımcı odaklı teknik hata mesajları (örn. "Invalid ObjectId", "Geçersiz statü geçişi") son kullanıcıların (Emlak Danışmanları) anlayabileceği basit ve yönlendirici uyarılara ("İşlemleri sırasıyla ilerletmelisiniz", "Sistem bu kaydı bulamadı") çevrilmiştir. UI tarafında da bu mesajlar Toast bildirimleri ile desteklenmiştir.
+
+### 12.3 Birim Test Stratejisi
+- Controller katmanı yerine doğrudan **Service Katmanı** test edilmiştir. Çünkü asıl iş mantığı (komisyon paylaşımındaki Senaryo 1 ve Senaryo 2 kuralları) burada dönmektedir.
+- `CommissionsService` ve `TransactionsService` testleri, hatalı veri girişlerini (`propertyPrice = 0`), geçersiz statü geçişlerini ve Mongoose oturum nesnelerinin (`ClientSession`) doğru enjekte edilmesini mock'layarak doğrular.
+
+---
+
+*Bu doküman proje boyunca güncel tutulmaktadır. Son güncelleme: Prodüksiyon (Deployment) Entegrasyonu, Hata Mesajları İyileştirmeleri ve Birim Testleri.*
