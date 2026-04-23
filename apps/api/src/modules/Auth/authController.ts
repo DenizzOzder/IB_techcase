@@ -48,7 +48,7 @@ export class AuthController {
   ) {
     const refreshToken = req.cookies?.['refreshToken'];
     if (!refreshToken) {
-      throw new UnauthorizedException('Oturum bulunamadı. Lütfen tekrar giriş yapın.');
+      throw new UnauthorizedException('Güvenliğiniz için tekrar giriş yapmanız gerekmektedir.');
     }
 
     const result = await this.authService.refreshTokensByToken(refreshToken);

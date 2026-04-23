@@ -122,7 +122,7 @@ export class TransactionsService {
    */
   private assertOwnership(transaction: TransactionDocument, user: IJwtPayload): void {
     if (user.role === Role.AGENT && transaction.agentId?.toString() !== user.sub) {
-      throw new BadRequestException('Bu işlemi güncelleme yetkiniz bulunmuyor.');
+      throw new BadRequestException('Bu işlem size ait olmadığı için değişiklik yapma yetkiniz bulunmuyor.');
     }
   }
 
@@ -140,10 +140,10 @@ export class TransactionsService {
 
       // İptal edilmiş veya tamamlanmış işlemlerin durumu değiştirilemez.
       if (currentStatus === TransactionStatus.CANCELLED) {
-        throw new BadRequestException('İptal edilmiş bir işlemin aşaması değiştirilemez.');
+        throw new BadRequestException('Bu işlem iptal edildiği için üzerinde değişiklik yapamazsınız.');
       }
       if (currentStatus === TransactionStatus.COMPLETED) {
-        throw new BadRequestException('Tamamlanmış bir işlem artık güncellenemez.');
+        throw new BadRequestException('İşlem tamamlandığı (Tapu devri bittiği) için artık güncellenemez.');
       }
 
       // Yalnızca bir sonraki veya bir önceki geçerli adıma geçişe izin ver
@@ -151,7 +151,7 @@ export class TransactionsService {
       const allowedPrev = this.getPreviousStatus(currentStatus);
       if (updateDto.status !== allowedNext && updateDto.status !== allowedPrev && updateDto.status !== TransactionStatus.CANCELLED) {
         throw new BadRequestException(
-          `Bu işlemin şu anki aşamasından (${currentStatus}) doğrudan bu aşamaya geçiş yapılamaz.`
+          `İşlemleri sırasıyla ilerletmelisiniz. (Mevcut aşama: ${currentStatus}) Doğrudan atlama yapılamaz.`
         );
       }
 
@@ -181,7 +181,7 @@ export class TransactionsService {
       session.endSession();
       // BadRequestException / NotFoundException zaten kullanıcı dostudur, tekrar sarmaya gerek yok.
       if (error instanceof BadRequestException || error instanceof NotFoundException) throw error;
-      throw new BadRequestException('Durum güncellenirken beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.');
+      throw new BadRequestException('Sistemde geçici bir sorun oluştu. Lütfen sayfayı yenileyip tekrar deneyin.');
     }
   }
 
@@ -190,10 +190,10 @@ export class TransactionsService {
     if (!transaction) throw new NotFoundException('Aradığınız emlak işlemi bulunamadı.');
     this.assertOwnership(transaction, user);
     if (transaction.status === TransactionStatus.COMPLETED) {
-      throw new BadRequestException('Tamamlanmış bir işlem iptal edilemez. Lütfen yöneticinizle iletişime geçin.');
+      throw new BadRequestException('Bu işlem tamamlandığı için iptal edilemez. Lütfen şirket yöneticisiyle iletişime geçin.');
     }
     if (transaction.status === TransactionStatus.CANCELLED) {
-      throw new BadRequestException('Bu işlem zaten iptal edilmiş.');
+      throw new BadRequestException('Bu işlem daha önceden iptal edilmiş.');
     }
     
     const previousStatus = transaction.status;
@@ -217,14 +217,14 @@ export class TransactionsService {
     if (!transaction) throw new NotFoundException('Aradığınız emlak işlemi bulunamadı.');
     this.assertOwnership(transaction, user);
     if (transaction.status === TransactionStatus.CANCELLED) {
-      throw new BadRequestException('İptal edilmiş bir işlem geri alınamaz.');
+      throw new BadRequestException('İptal edilen bir işlem tekrar geri alınamaz.');
     }
     if (transaction.status === TransactionStatus.COMPLETED) {
-      throw new BadRequestException('Tamamlanmış bir işlem geri alınamaz. Lütfen yöneticinizle iletişime geçin.');
+      throw new BadRequestException('İşlem tamamlandığı için geriye alınamaz. Lütfen şirket yöneticisiyle görüşün.');
     }
     const previousStatus = this.getPreviousStatus(transaction.status);
     if (!previousStatus) {
-      throw new BadRequestException('Bu işlem zaten başlangıç aşamasında, daha geriye dönülemiyor.');
+      throw new BadRequestException('Bu işlem en baş aşamada olduğu için daha fazla geriye alınamaz.');
     }
     
     const oldStatus = transaction.status;

@@ -16,7 +16,7 @@ export class CommissionsService {
    */
   async calculateCommission(transactionData: { _id: Types.ObjectId | string; agentId: Types.ObjectId | string; sellingAgentId?: Types.ObjectId | string; propertyPrice: number; commissionRate: number }, session: ClientSession) {
     if (transactionData.propertyPrice <= 0 || transactionData.commissionRate <= 0) {
-      throw new Error('Geçersiz işlem tutarı veya komisyon oranı. Değerler sıfırdan büyük olmalıdır.');
+      throw new Error('İşlem tutarı veya komisyon oranı sıfır girildiği için hesaplama yapılamadı.');
     }
 
     // Emlak satış/kiralama tutarı ve yüzdelik komisyon oranı üzerinden toplam komisyon (Amount)

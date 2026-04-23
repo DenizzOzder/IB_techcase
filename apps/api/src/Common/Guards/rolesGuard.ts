@@ -20,13 +20,13 @@ export class RolesGuard implements CanActivate {
     const { user } = context.switchToHttp().getRequest();
     
     if (!user) {
-      throw new ForbiddenException('Kullanıcı bilgisi bulunamadı.');
+      throw new ForbiddenException('Güvenliğiniz için tekrar giriş yapmanız gerekiyor.');
     }
 
     const hasRole = requiredRoles.some((role) => user.role === role);
     
     if (!hasRole) {
-      throw new ForbiddenException('Bu işlemi yapmak için yetkiniz bulunmamaktadır.');
+      throw new ForbiddenException('Bu işlemi yapmak için yetkiniz (yönetici/danışman) yeterli değil.');
     }
     
     return true;

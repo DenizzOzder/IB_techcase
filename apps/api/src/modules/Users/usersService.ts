@@ -51,7 +51,7 @@ export class UsersService implements OnModuleInit {
   async createAgent(data: { name: string; email: string; password?: string }): Promise<UserDocument> {
     const existing = await this.findByEmail(data.email);
     if (existing) {
-      throw new ConflictException('Bu email adresi zaten kullanılıyor.');
+      throw new ConflictException('Girdiğiniz e-posta adresi zaten kullanılıyor. Lütfen farklı bir adres deneyin.');
     }
 
     const passwordToHash = data.password || 'agent123';
@@ -88,14 +88,14 @@ export class UsersService implements OnModuleInit {
   async deactivateAgent(agentId: string): Promise<void> {
     const agent = await this.userModel.findByIdAndUpdate(agentId, { isActive: false }).exec();
     if (!agent) {
-      throw new NotFoundException('Danışman bulunamadı.');
+      throw new NotFoundException('İşlem yapmak istediğiniz danışman sistemde bulunamadı.');
     }
   }
 
   async getAgentStats(agentId: string): Promise<IAgentDetailResponse> {
     const agent = await this.userModel.findById(agentId).exec();
     if (!agent) {
-      throw new NotFoundException('Danışman bulunamadı.');
+      throw new NotFoundException('İstatistikleri istenen danışman sistemde bulunamadı.');
     }
 
     const objId = new Types.ObjectId(agentId);

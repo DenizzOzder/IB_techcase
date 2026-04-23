@@ -16,11 +16,11 @@ export class AuthService {
   async validateUser(email: string, pass: string): Promise<any> {
     const user = await this.usersService.findByEmail(email);
     if (!user) {
-      throw new UnauthorizedException('Kullanıcı bulunamadı.');
+      throw new UnauthorizedException('Girdiğiniz e-posta adresine ait bir hesap bulunamadı.');
     }
 
     if (!user.password) {
-      throw new UnauthorizedException('Geçersiz şifre.');
+      throw new UnauthorizedException('Girdiğiniz şifre hatalı, lütfen tekrar deneyin.');
     }
 
     const isMatch = await bcrypt.compare(pass, user.password);
@@ -28,7 +28,7 @@ export class AuthService {
       const { password, ...result } = user.toObject();
       return result;
     }
-    throw new UnauthorizedException('Şifre hatalı.');
+    throw new UnauthorizedException('Şifre hatalı, lütfen kontrol edip tekrar deneyin.');
   }
 
   async login(loginDto: ILoginRequest): Promise<ILoginResponse> {
@@ -62,12 +62,12 @@ export class AuthService {
   async refreshTokens(userId: string, refreshToken: string): Promise<ILoginResponse> {
     const user = await this.usersService.findById(userId);
     if (!user || !user.hashedRefreshToken) {
-      throw new UnauthorizedException('Erişim reddedildi.');
+      throw new UnauthorizedException('Hesabınıza ulaşılamıyor, lütfen tekrar giriş yapın.');
     }
 
     const refreshTokenMatches = await bcrypt.compare(refreshToken, user.hashedRefreshToken);
     if (!refreshTokenMatches) {
-      throw new UnauthorizedException('Geçersiz refresh token.');
+      throw new UnauthorizedException('Oturumunuzun süresi doldu veya geçersiz. Lütfen tekrar giriş yapın.');
     }
 
     const payload: IJwtPayload = { sub: user._id.toString(), email: user.email, role: user.role };
@@ -105,7 +105,7 @@ export class AuthService {
         secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
       });
     } catch {
-      throw new UnauthorizedException('Geçersiz veya süresi dolmuş refresh token.');
+      throw new UnauthorizedException('Oturum süreniz doldu, lütfen güvenliğiniz için yeniden giriş yapın.');
     }
     return this.refreshTokens(payload.sub, refreshToken);
   }
