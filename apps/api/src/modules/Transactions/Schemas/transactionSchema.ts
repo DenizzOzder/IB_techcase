@@ -7,7 +7,13 @@ export type TransactionDocument = Transaction & Document;
 @Schema({ timestamps: true })
 export class Transaction implements Omit<
   ITransaction,
-  '_id' | 'agentId' | 'sellingAgentId' | 'agentName' | 'createdAt' | 'updatedAt'
+  | '_id'
+  | 'agentId'
+  | 'sellingAgentId'
+  | 'pendingSellingAgentId'
+  | 'agentName'
+  | 'createdAt'
+  | 'updatedAt'
 > {
   @Prop({ required: true })
   propertyTitle: string;
@@ -25,6 +31,14 @@ export class Transaction implements Omit<
   /** İsteğe bağlı olarak atanan selling agent */
   @Prop({ type: Types.ObjectId, ref: 'User', required: false })
   sellingAgentId?: Types.ObjectId;
+
+  /** Başka bir danışmanın veya şirketin ilanını üzerine alma talebi */
+  @Prop({ type: Types.ObjectId, ref: 'User', required: false })
+  pendingSellingAgentId?: Types.ObjectId;
+
+  /** Şirket (Admin) tarafından mı oluşturuldu? */
+  @Prop({ type: Boolean, default: false })
+  isCompanyListing: boolean;
 
   /** Geriye dönük uyumluluk için optional bırakıldı */
   @Prop({ required: false })

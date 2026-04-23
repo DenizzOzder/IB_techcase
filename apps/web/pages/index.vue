@@ -127,17 +127,49 @@
           </button>
         </div>
 
+        <!-- AGENT TAB NAVİGASYON -->
+        <div v-if="!authStore.isAdmin" class="flex gap-2 mb-8 border-b border-gray-200 dark:border-gray-800 pb-px">
+          <button 
+            @click="agentTab = 'my'"
+            class="px-4 py-2 font-semibold text-sm transition-all border-b-2"
+            :class="agentTab === 'my' ? 'border-primary-500 text-primary-500' : 'border-transparent text-gray-500 hover:text-text'"
+          >
+            🏡 İlanlarım
+          </button>
+          <button 
+            @click="agentTab = 'company'"
+            class="px-4 py-2 font-semibold text-sm transition-all border-b-2"
+            :class="agentTab === 'company' ? 'border-primary-500 text-primary-500' : 'border-transparent text-gray-500 hover:text-text'"
+          >
+            🏢 İlan Havuzu
+          </button>
+        </div>
+
         <!-- İÇERİK: TABS -->
         
-        <!-- Tab: İlanlar (Agent'lar için her zaman aktif) -->
+        <!-- Tab: İlanlarım (Veya Admin İlanları) -->
         <AdminTransactionsTab 
-          v-if="!authStore.isAdmin || activeTab === 'transactions'"
+          v-if="(!authStore.isAdmin && agentTab === 'my') || (authStore.isAdmin && activeTab === 'transactions')"
           :transactions="transactions"
           :is-fetching="isFetchingTx"
           :has-more="hasMore"
+          :tab-type="authStore.isAdmin ? 'all' : 'my'"
           @advance="advanceStatus"
           @cancel="confirmCancel"
           @rollback="confirmRollback"
+          @load-more="loadMoreTransactions"
+          @approve-claim="handleApproveClaim"
+          @reject-claim="handleRejectClaim"
+        />
+
+        <!-- Tab: İlan Havuzu (Sadece Agent) -->
+        <AdminTransactionsTab 
+          v-if="!authStore.isAdmin && agentTab === 'company'"
+          :transactions="transactions"
+          :is-fetching="isFetchingTx"
+          :has-more="hasMore"
+          tab-type="company"
+          @claim="handleClaimTransaction"
           @load-more="loadMoreTransactions"
         />
 
@@ -203,11 +235,16 @@ const {
   transactions, 
   isFetching: isFetchingTx, 
   error, 
+  hasMore,
+  currentPage,
   fetchAll, 
   createTransaction, 
   updateStatus, 
   cancelTransaction, 
-  rollbackTransaction 
+  rollbackTransaction,
+  claimTransaction,
+  approveClaim,
+  rejectClaim
 } = useTransactions();
 
 const {
@@ -227,6 +264,7 @@ const myStats = ref<IStatsResponse | null>(null);
 
 // Tab state
 const activeTab = ref<'transactions' | 'agents' | 'logs'>('transactions');
+const agentTab = ref<'my' | 'company'>('my');
 const isProfileOpen = ref(false);
 
 const isFormOpen = ref(false);
@@ -240,7 +278,7 @@ const clearErrors = () => {
 
 // Initial load
 onMounted(async () => {
-  await fetchAll(1, 20, false);
+  await fetchAll(1, 20, false, authStore.isAdmin ? 'all' : 'my');
   if (authStore.isAdmin) {
     fetchAgents();
   } else {
@@ -252,6 +290,12 @@ onMounted(async () => {
 watch(activeTab, (newTab) => {
   if (newTab === 'agents' && agents.value.length === 0) {
     fetchAgents();
+  }
+});
+
+watch(agentTab, async (newTab) => {
+  if (!authStore.isAdmin) {
+    await fetchAll(1, 20, false, newTab);
   }
 });
 
@@ -269,7 +313,7 @@ const submitForm = async () => {
 
 const loadMoreTransactions = async () => {
   if (hasMore.value && !isFetchingTx.value) {
-    await fetchAll(currentPage.value + 1, 20, true);
+    await fetchAll(currentPage.value + 1, 20, true, authStore.isAdmin ? 'all' : agentTab.value);
   }
 };
 
@@ -295,6 +339,18 @@ const confirmRollback = (item: ITransaction) => {
     message: `"${item.propertyTitle}" işlemini bir önceki aşamaya döndürmek istiyor musunuz?`,
     onConfirm: async () => { confirmModal.value.show = false; await rollbackTransaction(item._id!); }
   };
+};
+
+const handleClaimTransaction = async (item: ITransaction) => {
+  await claimTransaction(item._id!, agentTab.value);
+};
+
+const handleApproveClaim = async (item: ITransaction) => {
+  await approveClaim(item._id!, agentTab.value);
+};
+
+const handleRejectClaim = async (item: ITransaction) => {
+  await rejectClaim(item._id!, agentTab.value);
 };
 
 // --- Agents Logic ---

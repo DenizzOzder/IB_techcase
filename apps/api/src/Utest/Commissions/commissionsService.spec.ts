@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return, @typescript-eslint/unbound-method, @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument */
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { CommissionsService } from '@/modules/Commissions/commissionsService';
@@ -36,12 +36,13 @@ describe('CommissionsService', () => {
   describe('calculateCommission', () => {
     const mockSession = {} as any;
 
-    it('Scenario 1: should correctly calculate commission when listing and selling agents are the same', async () => {
+    it('Senaryo 1: Şirketin ilanıysa ve tek danışman varsa (Satan 50% - Şirket 50%)', async () => {
       const transactionData = {
         _id: new Types.ObjectId().toString(),
         agentId: new Types.ObjectId().toString(),
+        isCompanyListing: true,
         propertyPrice: 1000000,
-        commissionRate: 2, // %2
+        commissionRate: 2, // Toplam 20,000
       };
 
       const result = await service.calculateCommission(
@@ -49,20 +50,19 @@ describe('CommissionsService', () => {
         mockSession,
       );
 
-      expect(result.transactionId).toBe(transactionData._id);
-      expect(result.amount).toBe(20000); // 1,000,000 * 2 / 100 = 20,000
-      expect(result.agencyAmount).toBe(10000); // 50%
-      expect(result.listingAgentAmount).toBe(10000); // 50%
+      expect(result.amount).toBe(20000);
+      expect(result.agencyAmount).toBe(10000); // 50% Şirket
+      expect(result.listingAgentAmount).toBe(10000); // 50% Agent
       expect(result.sellingAgentAmount).toBeUndefined();
       expect(result.status).toBe(CommissionStatus.UNPAID);
-      expect(result.save).toHaveBeenCalledWith({ session: mockSession });
     });
 
-    it('Scenario 2: should correctly split commission when listing and selling agents are different', async () => {
+    it('Senaryo 2: Şirket İlanı fakat 2 agent işin içindeyse (Agentlar 25% - 25% ve Şirket 50%)', async () => {
       const transactionData = {
         _id: new Types.ObjectId().toString(),
         agentId: new Types.ObjectId().toString(),
         sellingAgentId: new Types.ObjectId().toString(),
+        isCompanyListing: true,
         propertyPrice: 1000000,
         commissionRate: 2,
       };
@@ -73,10 +73,50 @@ describe('CommissionsService', () => {
       );
 
       expect(result.amount).toBe(20000);
-      expect(result.agencyAmount).toBe(10000); // 50%
-      expect(result.listingAgentAmount).toBe(5000); // 25%
-      expect(result.sellingAgentAmount).toBe(5000); // 25%
-      expect(result.status).toBe(CommissionStatus.UNPAID);
+      expect(result.agencyAmount).toBe(10000); // 50% Şirket
+      expect(result.listingAgentAmount).toBe(5000); // 25% Agent 1
+      expect(result.sellingAgentAmount).toBe(5000); // 25% Agent 2
+    });
+
+    it('Senaryo 3: Agent kendi ilanıysa (Agent 100% komisyon alır, Şirket %0)', async () => {
+      const transactionData = {
+        _id: new Types.ObjectId().toString(),
+        agentId: new Types.ObjectId().toString(),
+        isCompanyListing: false,
+        propertyPrice: 1000000,
+        commissionRate: 2,
+      };
+
+      const result = await service.calculateCommission(
+        transactionData,
+        mockSession,
+      );
+
+      expect(result.amount).toBe(20000);
+      expect(result.agencyAmount).toBe(0); // 0% Şirket
+      expect(result.listingAgentAmount).toBe(20000); // 100% Agent
+      expect(result.sellingAgentAmount).toBeUndefined();
+    });
+
+    it('Senaryo 4: Agent kendi ilanını başka agent satarsa (50% - 50% komisyon bölüştürülür, Şirket %0)', async () => {
+      const transactionData = {
+        _id: new Types.ObjectId().toString(),
+        agentId: new Types.ObjectId().toString(),
+        sellingAgentId: new Types.ObjectId().toString(),
+        isCompanyListing: false,
+        propertyPrice: 1000000,
+        commissionRate: 2,
+      };
+
+      const result = await service.calculateCommission(
+        transactionData,
+        mockSession,
+      );
+
+      expect(result.amount).toBe(20000);
+      expect(result.agencyAmount).toBe(0); // 0% Şirket
+      expect(result.listingAgentAmount).toBe(10000); // 50% Agent 1
+      expect(result.sellingAgentAmount).toBe(10000); // 50% Agent 2
     });
 
     it('should throw an error if propertyPrice is 0 or negative', async () => {

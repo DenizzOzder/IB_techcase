@@ -40,32 +40,83 @@
 
     <!-- Aksiyon Butonları -->
     <div class="flex flex-wrap gap-2 mt-auto">
-      <BaseButton 
-        v-if="item.status !== 'COMPLETED' && item.status !== 'CANCELLED'"
-        variant="primary" 
-        class="flex-1 min-w-[120px] shadow-lg shadow-primary-500/20"
-        @click="$emit('advance', item)"
-      >
-        İlerlet
-      </BaseButton>
+      <template v-if="tabType === 'company' && !authStore.isAdmin">
+        <BaseButton 
+          v-if="item.isCompanyListing"
+          variant="primary" 
+          class="w-full"
+          @click="$emit('claim', item)"
+        >
+          🎯 Üzerime Al
+        </BaseButton>
 
-      <BaseButton 
-        v-if="item.status !== 'COMPLETED' && item.status !== 'CANCELLED'"
-        variant="danger" 
-        class="flex-1 min-w-[120px] shadow-lg shadow-danger/20"
-        @click="$emit('cancel', item)"
-      >
-        İptal Et
-      </BaseButton>
+        <BaseButton 
+          v-else-if="item.pendingSellingAgentId === authStore.user?._id"
+          variant="secondary" 
+          disabled
+          class="w-full opacity-50 cursor-not-allowed"
+        >
+          ⏳ Talep Bekliyor
+        </BaseButton>
 
-      <BaseButton 
-        v-if="item.status !== 'AGREEMENT' && item.status !== 'COMPLETED' && item.status !== 'CANCELLED'"
-        variant="secondary" 
-        class="w-full"
-        @click="$emit('rollback', item)"
-      >
-        Geri Al
-      </BaseButton>
+        <BaseButton 
+          v-else
+          variant="primary" 
+          class="w-full"
+          @click="$emit('claim', item)"
+        >
+          🤝 Ortaklık Talep Et
+        </BaseButton>
+      </template>
+
+      <template v-else-if="item.pendingSellingAgentId && item.agentId === authStore.user?._id && !authStore.isAdmin">
+        <div class="w-full p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl mb-2 text-center text-sm font-semibold text-blue-700 dark:text-blue-300">
+          Ortaklık talebi geldi!
+        </div>
+        <BaseButton 
+          variant="primary" 
+          class="flex-1 min-w-[120px]"
+          @click="$emit('approve-claim', item)"
+        >
+          ✅ Onayla
+        </BaseButton>
+        <BaseButton 
+          variant="danger" 
+          class="flex-1 min-w-[120px]"
+          @click="$emit('reject-claim', item)"
+        >
+          ❌ Reddet
+        </BaseButton>
+      </template>
+
+      <template v-else>
+        <BaseButton 
+          v-if="item.status !== 'COMPLETED' && item.status !== 'CANCELLED'"
+          variant="primary" 
+          class="flex-1 min-w-[120px] shadow-lg shadow-primary-500/20"
+          @click="$emit('advance', item)"
+        >
+          İlerlet
+        </BaseButton>
+
+        <BaseButton 
+          v-if="item.status !== 'COMPLETED' && item.status !== 'CANCELLED'"
+          variant="danger" 
+          class="flex-1 min-w-[120px] shadow-lg shadow-danger/20"
+          @click="$emit('cancel', item)"
+        >
+          İptal Et
+        </BaseButton>
+
+        <BaseButton 
+          v-if="item.status !== 'AGREEMENT' && item.status !== 'COMPLETED' && item.status !== 'CANCELLED'"
+          variant="secondary" 
+          class="w-full"
+          @click="$emit('rollback', item)"
+        >
+          Geri Al
+        </BaseButton>
+      </template>
     </div>
   </div>
 </template>
@@ -78,12 +129,16 @@ const authStore = useAuthStore();
 
 defineProps<{
   item: ITransaction;
+  tabType?: 'my' | 'company' | 'all';
 }>();
 
 defineEmits<{
   (e: 'advance', item: ITransaction): void;
   (e: 'cancel', item: ITransaction): void;
   (e: 'rollback', item: ITransaction): void;
+  (e: 'claim', item: ITransaction): void;
+  (e: 'approve-claim', item: ITransaction): void;
+  (e: 'reject-claim', item: ITransaction): void;
 }>();
 
 const formatCurrency = (val: number) => {

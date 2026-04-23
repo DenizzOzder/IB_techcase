@@ -15,9 +15,13 @@
         v-for="tx in transactions" 
         :key="tx._id" 
         :item="tx"
+        :tab-type="tabType"
         @advance="$emit('advance', tx)"
         @cancel="$emit('cancel', tx)"
         @rollback="$emit('rollback', tx)"
+        @claim="$emit('claim', tx)"
+        @approve-claim="$emit('approve-claim', tx)"
+        @reject-claim="$emit('reject-claim', tx)"
       />
     </div>
 
@@ -42,12 +46,16 @@ defineProps<{
   transactions: ITransaction[];
   isFetching: boolean;
   hasMore?: boolean;
+  tabType?: 'my' | 'company' | 'all';
 }>();
 
 defineEmits<{
   (e: 'advance', tx: ITransaction): void;
   (e: 'cancel', tx: ITransaction): void;
   (e: 'rollback', tx: ITransaction): void;
+  (e: 'claim', tx: ITransaction): void;
+  (e: 'approve-claim', tx: ITransaction): void;
+  (e: 'reject-claim', tx: ITransaction): void;
   (e: 'load-more'): void;
 }>();
 </script>

@@ -31,10 +31,17 @@ export class TransactionsController {
     @CurrentUser() user: IJwtPayload,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
+    @Query('type') type?: 'my' | 'company' | 'all',
   ) {
     const pageNumber = page ? parseInt(page, 10) : 1;
     const limitNumber = limit ? parseInt(limit, 10) : 20;
-    return this.transactionsService.findAll(user, pageNumber, limitNumber);
+    const listType = type || 'all';
+    return this.transactionsService.findAll(
+      user,
+      pageNumber,
+      limitNumber,
+      listType,
+    );
   }
 
   /** Yeni işlem: agentId JWT'den alınır, client göndermiyor */
@@ -44,7 +51,7 @@ export class TransactionsController {
     @Body() createDto: CreateTransactionDto,
     @CurrentUser() user: IJwtPayload,
   ) {
-    return this.transactionsService.createTransaction(createDto, user.sub);
+    return this.transactionsService.createTransaction(createDto, user);
   }
 
   @Patch(':id/status')
@@ -77,5 +84,32 @@ export class TransactionsController {
     @CurrentUser() user: IJwtPayload,
   ) {
     return this.transactionsService.rollbackTransactionStatus(id, user);
+  }
+
+  @Patch(':id/claim')
+  @Roles(Role.ADMIN, Role.AGENT)
+  async claimTransaction(
+    @Param('id', ParseMongoIdPipe) id: string,
+    @CurrentUser() user: IJwtPayload,
+  ) {
+    return this.transactionsService.claimTransaction(id, user);
+  }
+
+  @Patch(':id/approve-claim')
+  @Roles(Role.ADMIN, Role.AGENT)
+  async approveClaim(
+    @Param('id', ParseMongoIdPipe) id: string,
+    @CurrentUser() user: IJwtPayload,
+  ) {
+    return this.transactionsService.approveClaim(id, user);
+  }
+
+  @Patch(':id/reject-claim')
+  @Roles(Role.ADMIN, Role.AGENT)
+  async rejectClaim(
+    @Param('id', ParseMongoIdPipe) id: string,
+    @CurrentUser() user: IJwtPayload,
+  ) {
+    return this.transactionsService.rejectClaim(id, user);
   }
 }

@@ -39,10 +39,30 @@ export class TransactionsService {
     user: IJwtPayload,
     page: number = 1,
     limit: number = 20,
+    listType: 'my' | 'company' | 'all' = 'all',
   ): Promise<Record<string, unknown>[]> {
     const skip = (page - 1) * limit;
-    const matchStage =
-      user.role === Role.ADMIN ? {} : { agentId: new Types.ObjectId(user.sub) };
+
+    let matchStage: Record<string, unknown> = {};
+    if (user.role === Role.ADMIN) {
+      matchStage = {};
+    } else {
+      if (listType === 'my') {
+        matchStage = {
+          $or: [
+            { agentId: new Types.ObjectId(user.sub) },
+            { sellingAgentId: new Types.ObjectId(user.sub) },
+          ],
+        };
+      } else if (listType === 'company') {
+        matchStage = {
+          sellingAgentId: { $in: [null, undefined] },
+          agentId: { $ne: new Types.ObjectId(user.sub) },
+        };
+      } else {
+        matchStage = { agentId: new Types.ObjectId(user.sub) };
+      }
+    }
 
     const pipeline = [
       { $match: matchStage },
@@ -102,18 +122,19 @@ export class TransactionsService {
    */
   async createTransaction(
     createDto: CreateTransactionDto,
-    agentId: string,
+    user: IJwtPayload,
   ): Promise<TransactionDocument> {
     const createdTransaction = new this.transactionModel({
       ...createDto,
-      agentId: new Types.ObjectId(agentId),
+      agentId: new Types.ObjectId(user.sub),
+      isCompanyListing: user.role === Role.ADMIN,
     });
 
     await createdTransaction.save();
 
     await this.auditLogsService.logAction(
       createdTransaction._id,
-      agentId,
+      user.sub,
       createDto.propertyTitle,
       AuditLogAction.CREATED,
       TransactionStatus.AGREEMENT,
@@ -152,10 +173,12 @@ export class TransactionsService {
     transaction: TransactionDocument,
     user: IJwtPayload,
   ): void {
-    if (
-      user.role === Role.AGENT &&
-      transaction.agentId?.toString() !== user.sub
-    ) {
+    if (user.role === Role.ADMIN) return;
+
+    const isOwner = transaction.agentId?.toString() === user.sub;
+    const isSellingAgent = transaction.sellingAgentId?.toString() === user.sub;
+
+    if (!isOwner && !isSellingAgent) {
       throw new BadRequestException(
         'Bu işlem size ait olmadığı için değişiklik yapma yetkiniz bulunmuyor.',
       );
@@ -318,6 +341,87 @@ export class TransactionsService {
       oldStatus,
     );
 
+    return transaction;
+  }
+
+  async claimTransaction(
+    id: string,
+    user: IJwtPayload,
+  ): Promise<TransactionDocument> {
+    const transaction = await this.transactionModel.findById(id);
+    if (!transaction) throw new NotFoundException('İşlem bulunamadı.');
+
+    if (transaction.sellingAgentId) {
+      throw new BadRequestException(
+        'Bu ilan zaten alınmış veya ortaklık kurulmuş.',
+      );
+    }
+
+    if (transaction.agentId.toString() === user.sub) {
+      throw new BadRequestException('Kendi ilanınızı üzerinize alamazsınız.');
+    }
+
+    if (transaction.isCompanyListing) {
+      transaction.sellingAgentId = new Types.ObjectId(user.sub);
+    } else {
+      if (transaction.pendingSellingAgentId?.toString() === user.sub) {
+        throw new BadRequestException(
+          'Zaten talep gönderdiniz, onay bekleniyor.',
+        );
+      }
+      transaction.pendingSellingAgentId = new Types.ObjectId(user.sub);
+    }
+
+    await transaction.save();
+    return transaction;
+  }
+
+  async approveClaim(
+    id: string,
+    user: IJwtPayload,
+  ): Promise<TransactionDocument> {
+    const transaction = await this.transactionModel.findById(id);
+    if (!transaction) throw new NotFoundException('İşlem bulunamadı.');
+
+    if (
+      transaction.agentId.toString() !== user.sub &&
+      user.role !== Role.ADMIN
+    ) {
+      throw new BadRequestException(
+        'Sadece ilanı oluşturan kişi talebi onaylayabilir.',
+      );
+    }
+
+    if (!transaction.pendingSellingAgentId) {
+      throw new BadRequestException('Onaylanacak bir talep bulunamadı.');
+    }
+
+    transaction.sellingAgentId = transaction.pendingSellingAgentId;
+    transaction.pendingSellingAgentId = undefined;
+
+    await transaction.save();
+    return transaction;
+  }
+
+  async rejectClaim(
+    id: string,
+    user: IJwtPayload,
+  ): Promise<TransactionDocument> {
+    const transaction = await this.transactionModel.findById(id);
+    if (!transaction) throw new NotFoundException('İşlem bulunamadı.');
+
+    if (
+      transaction.agentId.toString() !== user.sub &&
+      user.role !== Role.ADMIN
+    ) {
+      throw new BadRequestException(
+        'Sadece ilanı oluşturan kişi talebi reddedebilir.',
+      );
+    }
+
+    transaction.pendingSellingAgentId = undefined;
+
+    await transaction.save();
     return transaction;
   }
 }

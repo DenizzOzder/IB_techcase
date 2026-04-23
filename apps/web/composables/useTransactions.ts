@@ -26,12 +26,12 @@ export const useTransactions = () => {
   };
 
   // 1. Emlak İşlemlerini Çek — Rol bazlı filtreleme backend'de yapılır
-  const fetchAll = async (page: number = 1, limit: number = 20, loadMore: boolean = false) => {
+  const fetchAll = async (page: number = 1, limit: number = 20, loadMore: boolean = false, listType: 'my' | 'company' | 'all' = 'all') => {
     isFetching.value = true;
     error.value = null;
     try {
       const res = await $fetch<{ data: ITransaction[] }>(`${API}/transactions`, {
-        query: { page, limit },
+        query: { page, limit, type: listType },
         credentials: 'include',
         headers: getHeaders(),
       });
@@ -142,6 +142,69 @@ export const useTransactions = () => {
     }
   };
 
+  const claimTransaction = async (id: string, listType: 'my' | 'company' | 'all' = 'all') => {
+    isFetching.value = true;
+    error.value = null;
+    try {
+      await $fetch(`${API}/transactions/${id}/claim`, {
+        method: 'PATCH',
+        headers: getHeaders(),
+        credentials: 'include',
+      });
+      error.value = null;
+      await fetchAll(1, 20, false, listType);
+    } catch (err) {
+      const e = err as { data?: { message?: string }; message?: string };
+      error.value = Array.isArray(e.data?.message)
+        ? e.data.message.join(' | ')
+        : (e.data?.message || 'İlanı üzerinize alırken bir hata oluştu.');
+    } finally {
+      isFetching.value = false;
+    }
+  };
+
+  const approveClaim = async (id: string, listType: 'my' | 'company' | 'all' = 'all') => {
+    isFetching.value = true;
+    error.value = null;
+    try {
+      await $fetch(`${API}/transactions/${id}/approve-claim`, {
+        method: 'PATCH',
+        headers: getHeaders(),
+        credentials: 'include',
+      });
+      error.value = null;
+      await fetchAll(1, 20, false, listType);
+    } catch (err) {
+      const e = err as { data?: { message?: string }; message?: string };
+      error.value = Array.isArray(e.data?.message)
+        ? e.data.message.join(' | ')
+        : (e.data?.message || 'Talebi onaylarken bir hata oluştu.');
+    } finally {
+      isFetching.value = false;
+    }
+  };
+
+  const rejectClaim = async (id: string, listType: 'my' | 'company' | 'all' = 'all') => {
+    isFetching.value = true;
+    error.value = null;
+    try {
+      await $fetch(`${API}/transactions/${id}/reject-claim`, {
+        method: 'PATCH',
+        headers: getHeaders(),
+        credentials: 'include',
+      });
+      error.value = null;
+      await fetchAll(1, 20, false, listType);
+    } catch (err) {
+      const e = err as { data?: { message?: string }; message?: string };
+      error.value = Array.isArray(e.data?.message)
+        ? e.data.message.join(' | ')
+        : (e.data?.message || 'Talebi reddederken bir hata oluştu.');
+    } finally {
+      isFetching.value = false;
+    }
+  };
+
   return {
     transactions,
     isFetching,
@@ -153,5 +216,8 @@ export const useTransactions = () => {
     updateStatus,
     cancelTransaction,
     rollbackTransaction,
+    claimTransaction,
+    approveClaim,
+    rejectClaim,
   };
 };

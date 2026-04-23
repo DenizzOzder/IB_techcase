@@ -23,6 +23,7 @@ export class CommissionsService {
       _id: Types.ObjectId | string;
       agentId: Types.ObjectId | string;
       sellingAgentId?: Types.ObjectId | string;
+      isCompanyListing?: boolean;
       propertyPrice: number;
       commissionRate: number;
     },
@@ -41,9 +42,7 @@ export class CommissionsService {
     const calculatedAmount =
       (transactionData.propertyPrice * transactionData.commissionRate) / 100;
 
-    // Şirket her koşulda %50 pay alır.
-    const agencyAmount = calculatedAmount * 0.5;
-
+    let agencyAmount = 0;
     let listingAgentAmount = 0;
     let sellingAgentAmount: number | undefined = undefined;
 
@@ -52,14 +51,32 @@ export class CommissionsService {
       ? transactionData.sellingAgentId.toString()
       : null;
 
-    // Senaryo 1: Satan danışman yok veya listeleyen ile aynıysa -> Danışman payı %100 (%50 of total)
-    if (!sellingStr || listingStr === sellingStr) {
-      listingAgentAmount = calculatedAmount * 0.5;
-    }
-    // Senaryo 2: Farklı kişilerse -> Danışman payı ikiye bölünür (%25 - %25 of total)
-    else {
-      listingAgentAmount = calculatedAmount * 0.25;
-      sellingAgentAmount = calculatedAmount * 0.25;
+    const isTwoAgents = sellingStr && listingStr !== sellingStr;
+
+    if (transactionData.isCompanyListing) {
+      // Şirket İlanı Senaryoları
+      agencyAmount = calculatedAmount * 0.5; // Şirket her zaman %50 alır
+
+      if (isTwoAgents) {
+        // Senaryo 2: Şirket İlanı fakat 2 agent işin içindeyse (Agentlar 25% - 25% ve Şirket 50%)
+        listingAgentAmount = calculatedAmount * 0.25;
+        sellingAgentAmount = calculatedAmount * 0.25;
+      } else {
+        // Senaryo 1: Şirketin ilanıysa ve 1 agent varsa (Satan 50% - Şirket 50%)
+        listingAgentAmount = calculatedAmount * 0.5;
+      }
+    } else {
+      // Agent Kendi İlanı Senaryoları
+      agencyAmount = 0; // Şirket pay almaz
+
+      if (isTwoAgents) {
+        // Senaryo 4: Agent kendi ilanını başka agent satarsa (50% - 50% Komisyon bölüştürülür)
+        listingAgentAmount = calculatedAmount * 0.5;
+        sellingAgentAmount = calculatedAmount * 0.5;
+      } else {
+        // Senaryo 3: Agent kendi ilanıysa (100% Komisyon alır)
+        listingAgentAmount = calculatedAmount;
+      }
     }
 
     // Bağımsız Commission koleksiyonuna dökümanı ekle.

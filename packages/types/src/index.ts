@@ -29,6 +29,8 @@ export interface ITransaction {
   propertyPrice: number;     // Mülkün veya sözleşmenin toplam tutarı
   agentId: string;           // İşlemi açan danışmanın User._id referansı (JWT'den alınır) - LISTING AGENT
   sellingAgentId?: string;   // İşlemi kapatan danışman (Eğer farklıysa, paylar 25/25 bölünür)
+  pendingSellingAgentId?: string; // Başka danışmanın veya şirketin ilanını üzerine alma talebi
+  isCompanyListing?: boolean; // Şirket (Admin) tarafından mı oluşturuldu?
   agentName?: string;        // Geriye dönük uyumluluk için optional
   commissionRate: number;    // Yüzdelik Oran (Örn: 2 => %2)
   calculatedCommission?: number; // EĞER işlem COMPLETED ise hesaplanan toplam komisyon miktarı
