@@ -44,7 +44,8 @@ export const useTransactions = () => {
       
       currentPage.value = page;
       hasMore.value = res.length === limit;
-    } catch (e: any) {
+    } catch (err) {
+      const e = err as { data?: { message?: string }; message?: string };
       error.value = e.data?.message?.toString() || e.message || 'Sunucuyla bağlantı kurulamadı.';
     } finally {
       isFetching.value = false;
@@ -65,7 +66,8 @@ export const useTransactions = () => {
       error.value = null;
       await fetchAll();
       return true;
-    } catch (e: any) {
+    } catch (err) {
+      const e = err as { data?: { message?: string }; message?: string };
       error.value = Array.isArray(e.data?.message)
         ? e.data.message.join(' | ')
         : (e.data?.message || 'Kayıt sırasında bilinmeyen hata.');
@@ -88,7 +90,8 @@ export const useTransactions = () => {
       });
       error.value = null;
       await fetchAll();
-    } catch (e: any) {
+    } catch (err) {
+      const e = err as { data?: { message?: string }; message?: string };
       error.value = Array.isArray(e.data?.message)
         ? e.data.message.join(' | ')
         : (e.data?.message || 'Tapu statüsü güncellenemedi.');
@@ -108,7 +111,8 @@ export const useTransactions = () => {
       });
       error.value = null;
       await fetchAll();
-    } catch (e: any) {
+    } catch (err) {
+      const e = err as { data?: { message?: string }; message?: string };
       error.value = Array.isArray(e.data?.message)
         ? e.data.message.join(' | ')
         : (e.data?.message || 'İptal işlemi sırasında bir hata oluştu.');
@@ -128,7 +132,8 @@ export const useTransactions = () => {
       });
       error.value = null;
       await fetchAll();
-    } catch (e: any) {
+    } catch (err) {
+      const e = err as { data?: { message?: string }; message?: string };
       error.value = Array.isArray(e.data?.message)
         ? e.data.message.join(' | ')
         : (e.data?.message || 'Geri alma işlemi sırasında bir hata oluştu.');

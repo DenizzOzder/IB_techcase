@@ -1,17 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { TransactionsService } from '../transactionsService';
-import { CommissionsService } from '../../Commissions/commissionsService';
-import { AuditLogsService } from '../../AuditLogs/auditLogsService';
-import { Transaction } from '../Schemas/transactionSchema';
+import { TransactionsService } from '@/modules/Transactions/transactionsService';
+import { CommissionsService } from '@/modules/Commissions/commissionsService';
+import { AuditLogsService } from '@/modules/AuditLogs/auditLogsService';
+import { Transaction } from '@/modules/Transactions/Schemas/transactionSchema';
 import { TransactionStatus, Role, IJwtPayload } from '@repo/types';
 
 describe('TransactionsService', () => {
   let service: TransactionsService;
-  let mockTransactionModel: any;
-  let mockCommissionsService: any;
-  let mockAuditLogsService: any;
+  let mockTransactionModel: Record<string, jest.Mock>;
+  let mockCommissionsService: Record<string, jest.Mock>;
+  let mockAuditLogsService: Record<string, jest.Mock>;
 
   const mockSession = {
     startTransaction: jest.fn(),
@@ -24,6 +24,7 @@ describe('TransactionsService', () => {
 
   beforeEach(async () => {
     mockTransactionModel = {
+      // @ts-ignore
       db: { startSession: jest.fn().mockResolvedValue(mockSession) },
       findById: jest.fn(),
     };

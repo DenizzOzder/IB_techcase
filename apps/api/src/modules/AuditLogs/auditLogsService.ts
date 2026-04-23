@@ -56,7 +56,7 @@ export class AuditLogsService {
     const skip = (page - 1) * limit;
 
     const [data, total] = await Promise.all([
-      this.auditLogModel.find().sort({ createdAt: -1 }).skip(skip).limit(limit).exec(),
+      this.auditLogModel.find().sort({ createdAt: -1 }).skip(skip).limit(limit).exec() as Promise<AuditLogDocument[]>,
       this.auditLogModel.countDocuments().exec()
     ]);
 
@@ -70,7 +70,7 @@ export class AuditLogsService {
         action: log.action,
         previousStatus: log.previousStatus,
         newStatus: log.newStatus,
-        createdAt: (log as any).createdAt?.toISOString(),
+        createdAt: log.get ? log.get('createdAt')?.toISOString() : undefined,
       })),
       total,
       page,

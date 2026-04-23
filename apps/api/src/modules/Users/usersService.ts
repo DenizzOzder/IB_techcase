@@ -81,7 +81,7 @@ export class UsersService implements OnModuleInit {
       email: agent.email,
       role: agent.role,
       isActive: agent.isActive,
-      createdAt: (agent as any).createdAt?.toISOString() || new Date().toISOString(),
+      createdAt: (agent as unknown as { createdAt?: Date }).createdAt?.toISOString() || new Date().toISOString(),
     }));
   }
 
@@ -133,7 +133,7 @@ export class UsersService implements OnModuleInit {
       email: agent.email,
       role: agent.role,
       isActive: agent.isActive,
-      createdAt: (agent as any).createdAt?.toISOString() || new Date().toISOString(),
+      createdAt: (agent as unknown as { createdAt?: Date }).createdAt?.toISOString() || new Date().toISOString(),
       stats: {
         totalTransactions,
         completedTransactions,

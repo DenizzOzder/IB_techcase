@@ -24,7 +24,8 @@ export const useAdminStats = () => {
         credentials: 'include',
       });
       stats.value = res;
-    } catch (e: any) {
+    } catch (err) {
+      const e = err as { data?: { message?: string }; message?: string };
       error.value = e.data?.message || 'İstatistikler yüklenemedi.';
     } finally {
       isLoading.value = false;

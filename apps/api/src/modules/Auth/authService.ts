@@ -38,9 +38,10 @@ export class AuthService {
 
     const accessToken = this.jwtService.sign(payload);
 
+    // @ts-ignore
     const refreshToken = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-      expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN') as any,
+      expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN'),
     });
 
     const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
@@ -72,9 +73,10 @@ export class AuthService {
     const payload: IJwtPayload = { sub: user._id.toString(), email: user.email, role: user.role };
 
     const newAccessToken = this.jwtService.sign(payload);
+    // @ts-ignore
     const newRefreshToken = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-      expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN') as any,
+      expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN'),
     });
 
     const hashedRefreshToken = await bcrypt.hash(newRefreshToken, 10);

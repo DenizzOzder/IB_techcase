@@ -297,7 +297,7 @@ const confirmRollback = (item: ITransaction) => {
 };
 
 // --- Agents Logic ---
-const handleAddAgent = async (data: any) => {
+const handleAddAgent = async (data: Record<string, unknown>) => {
   await createAgent(data);
 };
 

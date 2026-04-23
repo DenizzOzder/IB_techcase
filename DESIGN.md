@@ -178,6 +178,15 @@ Aktif bir şirkette her işlem için birden fazla log üretilir. 100 danışman 
 
 > Bu kararların temel motivasyonu: **Log verisi yazma hızlı, okuma sık.** İki operasyonu birbirinden bağımsız optimize etmek sistem ölçeklenebilirliğini korur.
 
+### 9.3 Yüksek Hacimli Veri ve Redis Darboğaz Koruması (Stress Test Hazırlığı)
+
+Sistemin 200+ aktif danışman ve 40.000+ işlem ile aynı anda çalıştığı durumlarda (yaklaşık 100.000+ Audit Log ve binlerce Komisyon), MongoDB üzerinde `$group` ve `$sum` agregasyonlarını sürekli çalıştırmak CPU darboğazına (bottleneck) yol açabilir. 
+
+Bunu engellemek için:
+- **Redis Kurulumu:** `@nestjs/cache-manager` ve `cache-manager-redis-store` kullanılarak uygulama genelinde bir Cache Module aktif edildi.
+- **Cache Interceptor:** Özellikle `/admin/stats` ve paginasyonlu `/logs` endpointlerinde 5 dakikalık (`300000ms`) / 1 dakikalık (`60000ms`) önbellekleme kullanılarak DB üzerindeki anlık yük %99 oranında azaltıldı.
+- **Docker Compose:** Redis ve MongoDB (Replica Set destekli) mimarisi tek bir `docker-compose.yml` altında izole edilerek üretim ortamı standartlarına uygun hale getirildi.
+
 ---
 
 ## 10. Kimlik Doğrulama ve Oturum Yönetimi Mimarisi

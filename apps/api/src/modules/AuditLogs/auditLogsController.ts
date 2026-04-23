@@ -1,4 +1,5 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards, UseInterceptors } from '@nestjs/common';
+import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { AuditLogsService } from '@/modules/AuditLogs/auditLogsService';
 import { JwtAuthGuard } from '@/Common/Guards/jwtAuthGuard';
 import { RolesGuard } from '@/Common/Guards/rolesGuard';
@@ -12,6 +13,8 @@ export class AuditLogsController {
 
   @Get()
   @Roles(Role.ADMIN)
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(60000)
   async getLogs(
     @Query('page') page: string = '1',
     @Query('limit') limit: string = '20'

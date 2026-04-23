@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, ClientSession } from 'mongoose';
+import { Model, ClientSession, Types } from 'mongoose';
 import { Commission, CommissionDocument } from '@/modules/Commissions/Schemas/commissionSchema';
 import { CommissionStatus, ITransaction } from '@repo/types';
 
@@ -14,7 +14,7 @@ export class CommissionsService {
    * MongoDB Transactions desteğiyle komisyon hesaplaması.
    * COMPLETED statüsüne alınan transaction üzerinden tetiklenir.
    */
-  async calculateCommission(transactionData: { _id: any; propertyPrice: number; commissionRate: number }, session: ClientSession) {
+  async calculateCommission(transactionData: { _id: Types.ObjectId | string; propertyPrice: number; commissionRate: number }, session: ClientSession) {
     if (transactionData.propertyPrice <= 0 || transactionData.commissionRate <= 0) {
       throw new Error('Geçersiz işlem tutarı veya komisyon oranı. Değerler sıfırdan büyük olmalıdır.');
     }

@@ -19,7 +19,8 @@ export function useAgents() {
         headers: { Authorization: `Bearer ${authStore.accessToken}` }
       });
       agents.value = response;
-    } catch (e: any) {
+    } catch (err) {
+      const e = err as { data?: { message?: string }; message?: string };
       error.value = e.data?.message || 'Danışmanlar yüklenirken bir hata oluştu.';
     } finally {
       isFetching.value = false;
@@ -37,7 +38,8 @@ export function useAgents() {
       });
       await fetchAgents();
       return true;
-    } catch (e: any) {
+    } catch (err) {
+      const e = err as { data?: { message?: string }; message?: string };
       error.value = e.data?.message || 'Danışman oluşturulamadı.';
       return false;
     } finally {
@@ -55,7 +57,8 @@ export function useAgents() {
       });
       await fetchAgents();
       return true;
-    } catch (e: any) {
+    } catch (err) {
+      const e = err as { data?: { message?: string }; message?: string };
       error.value = e.data?.message || 'Danışman pasife alınamadı.';
       return false;
     } finally {
@@ -71,7 +74,8 @@ export function useAgents() {
         headers: { Authorization: `Bearer ${authStore.accessToken}` }
       });
       selectedAgent.value = response;
-    } catch (e: any) {
+    } catch (err) {
+      const e = err as { data?: { message?: string }; message?: string };
       error.value = e.data?.message || 'Danışman detayları yüklenemedi.';
     } finally {
       isFetching.value = false;
@@ -86,7 +90,8 @@ export function useAgents() {
         headers: { Authorization: `Bearer ${authStore.accessToken}` }
       });
       return response;
-    } catch (e: any) {
+    } catch (err) {
+      const e = err as { data?: { message?: string }; message?: string };
       error.value = e.data?.message || 'İstatistikleriniz yüklenemedi.';
       return null;
     } finally {

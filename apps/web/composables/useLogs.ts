@@ -18,7 +18,8 @@ export function useLogs() {
         headers: { Authorization: `Bearer ${authStore.accessToken}` }
       });
       logsData.value = response;
-    } catch (e: any) {
+    } catch (err) {
+      const e = err as { data?: { message?: string }; message?: string };
       error.value = e.data?.message || 'Loglar yüklenirken bir hata oluştu.';
     } finally {
       isFetching.value = false;

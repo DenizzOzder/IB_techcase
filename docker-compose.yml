@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:6.0
+    container_name: ib_mongodb
+    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: rootpassword
+    healthcheck:
+      test: test $$(echo "rs.initiate({_id:'rs0',members:[{_id:0,host:\"mongodb:27017\"}]}).ok || rs.status().ok" | mongosh -u root -p rootpassword --quiet) -eq 1
+      interval: 10s
+      start_period: 30s
+    volumes:
+      - mongo_data:/data/db
+
+  redis:
+    image: redis:7.0-alpine
+    container_name: ib_redis
+    ports:
+      - "6379:6379"
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: ib_api
+    ports:
+      - "3001:3001"
+    env_file:
+      - .env.production
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: ib_web
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.production
+    depends_on:
+      - api
+
+volumes:
+  mongo_data:

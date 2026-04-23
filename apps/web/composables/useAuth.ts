@@ -9,7 +9,7 @@ interface AuthResponse {
     _id: string;
     name: string;
     email: string;
-    role: any;
+    role: string;
   };
 }
 
@@ -32,7 +32,8 @@ export const useAuth = () => {
       authStore.setSession(res.accessToken, res.user);
       await router.push('/');
       return { success: true };
-    } catch (e: any) {
+    } catch (err) {
+      const e = err as { data?: { message?: string }; message?: string };
       const msg = e.data?.message || e.message || 'Giriş sırasında bir hata oluştu.';
       return { success: false, error: msg };
     }

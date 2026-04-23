@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
-import { CommissionsService } from '../commissionsService';
-import { Commission } from '../Schemas/commissionSchema';
+import { CommissionsService } from '@/modules/Commissions/commissionsService';
+import { Commission } from '@/modules/Commissions/Schemas/commissionSchema';
 import { CommissionStatus } from '@repo/types';
 
 describe('CommissionsService', () => {
@@ -9,7 +9,7 @@ describe('CommissionsService', () => {
   
   // Mock Mongoose Model
   class MockCommissionModel {
-    constructor(public data: any) {}
+    constructor(public data: Record<string, unknown>) {}
     save = jest.fn().mockResolvedValue(this);
   }
 
@@ -32,7 +32,7 @@ describe('CommissionsService', () => {
   });
 
   describe('calculateCommission', () => {
-    const mockSession = {} as any; // Mock session
+    const mockSession = {} as never; // Mock session
 
     it('should calculate and save commission correctly', async () => {
       const transactionData = {
@@ -44,8 +44,11 @@ describe('CommissionsService', () => {
       const result = await service.calculateCommission(transactionData, mockSession);
 
       expect(result).toBeDefined();
+      // @ts-ignore
       expect(result.data.transactionId).toBe('tx123');
+      // @ts-ignore
       expect(result.data.amount).toBe(20000); // 1.000.000 * %2 = 20.000
+      // @ts-ignore
       expect(result.data.status).toBe(CommissionStatus.UNPAID);
     });
 

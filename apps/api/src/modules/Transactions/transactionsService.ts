@@ -21,13 +21,13 @@ export class TransactionsService {
    * - ADMIN → Tüm işlemleri görür
    * - AGENT → Yalnızca kendi agentId'siyle açtığı işlemleri görür (veri izolasyonu)
    */
-  async findAll(user: IJwtPayload, page: number = 1, limit: number = 20): Promise<any[]> {
+  async findAll(user: IJwtPayload, page: number = 1, limit: number = 20): Promise<Record<string, unknown>[]> {
     const skip = (page - 1) * limit;
     const matchStage = user.role === Role.ADMIN ? {} : { agentId: new Types.ObjectId(user.sub) };
 
     const pipeline = [
       { $match: matchStage },
-      { $sort: { createdAt: -1 } as any },
+      { $sort: { createdAt: -1 } as Record<string, 1 | -1> },
       { $skip: skip },
       { $limit: limit },
       {
