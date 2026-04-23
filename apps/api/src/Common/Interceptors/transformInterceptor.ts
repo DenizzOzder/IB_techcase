@@ -29,8 +29,9 @@ export class TransformInterceptor<T> implements NestInterceptor<
 
     return next.handle().pipe(
       map((data) => {
-        // Mongoose document'ları plain object'e çevir ve __v vs. gizle
-        const transformedData = instanceToPlain(data, {
+        // Mongoose objeleri ve aggregation ObjectId'lerini string'e çevirmek için JSON stringify trick
+        const safeData = JSON.parse(JSON.stringify(data));
+        const transformedData = instanceToPlain(safeData, {
           excludeExtraneousValues: false,
           enableImplicitConversion: true,
         }) as T;

@@ -41,6 +41,8 @@ TODO.md
 
 # Scratch Files
 scratch/
+# Scripts
+scripts/
 
 # One-off script fixes
 fix*.js
